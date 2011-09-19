@@ -1,0 +1,73 @@
+(defpackage :kyoto-cabinet.database
+  (:nicknames :kc.db)
+  (:use :cl :cffi :kc.ffi.core)
+  (:import-from :alexandria :once-only)
+  (:shadow :open :close :get))
+(in-package :kc.db)
+
+(defconstant +open-mode-reader+     #b000000001)
+(defconstant +open-mode-writer+     #b000000010)
+(defconstant +open-mode-create+     #b000000100)
+(defconstant +open-mode-truncate+   #b000001000)
+(defconstant +open-mode-auto-tran+  #b000010000)
+(defconstant +open-mode-auto-sync+  #b000100000)
+(defconstant +open-mode-no-lock+    #b001000000)
+(defconstant +open-mode-try-lock+   #b010000000)
+(defconstant +open-mode-no-repair+  #b100000000)
+
+(setf (symbol-function 'new) #'kcdbnew)
+(setf (symbol-function 'del) #'kcdbdel)
+
+(defun open (db path
+             &key
+             (direction :input)      ; :input, :output, :io, :probe
+             (if-exists :append)     ; :overwrite, :append
+             (if-does-not-exist (cond ((or (eq direction :probe)
+                                           (eq direction :input)
+                                           (eq if-exists :overwrite)
+                                           (eq if-exists :append))
+                                       :error)
+                                      (t :create)))
+             (error-p t)
+             (auto-transaction-p nil)
+             (auto-sync-p nil)
+             (lock-p t)
+             (block-p t)
+             (repair-p t))
+  (let* ((mode (logand (case direction
+                         (:input +open-mode-reader+)
+                         (:output +open-mode-writer+)
+                         (:io #.(logand +open-mode-reader+ +open-mode-writer+))
+                         (t 0))
+                       (if (eq if-exists :overwrite) +open-mode-truncate+ 0)
+                       (if (eq if-does-not-exist :create) +open-mode-create+ 0)
+                       (if auto-transaction-p +open-mode-auto-tran+ 0)
+                       (if auto-sync-p +open-mode-auto-sync+ 0)
+                       (if lock-p 0 +open-mode-no-lock+)
+                       (if block-p 0 +open-mode-try-lock+)
+                       (if repair-p 0 +open-mode-no-repair+))))
+    (with-foreign-string (p path)
+      (let ((r (kcdbopen db p mode)))
+        (if (and (zerop r) error-p)
+            (error "~a" (kcdbemsg db))
+            (translate-from-foreign r :boolean))))))
+
+(defun close (db)
+  (translate-from-foreign (kcdbclose db) :boolean))
+
+(defmacro with-db ((db filespec &rest args) &body body)
+  (once-only (filespec)
+    `(let ((,db (new)))
+       (unwind-protect (when (open ,db ,filespec ,@args)
+                         (unwind-protect (progn ,@body)
+                           (close ,db)))
+         (del ,var)))))
+
+(defun get (db key)
+  (with-foreign-object (sp 'size_t)
+    (with-foreign-string ((kbuf ksiz) key)
+      (let ((ptr (kcdbget db kbuf ksiz sp)))
+        (if (null-pointer-p ptr)
+            nil	; fix here
+            (unwind-protect (foreign-string-to-lisp ptr)
+              (kcfree ptr)))))))
