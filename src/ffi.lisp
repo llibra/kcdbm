@@ -1,8 +1,14 @@
-(defpackage :kyoto-cabinet.ffi.core
-  (:nicknames :kc.ffi.core)
-  (:use :cl :cffi)
-  (:export :kcdbnew :kcdbdel :kcdbopen :kcdbclose :kcdbemsg))
 (in-package :kc.ffi.core)
+
+(defconstant +open-mode-reader+     #b000000001)
+(defconstant +open-mode-writer+     #b000000010)
+(defconstant +open-mode-create+     #b000000100)
+(defconstant +open-mode-truncate+   #b000001000)
+(defconstant +open-mode-auto-tran+  #b000010000)
+(defconstant +open-mode-auto-sync+  #b000100000)
+(defconstant +open-mode-no-lock+    #b001000000)
+(defconstant +open-mode-try-lock+   #b010000000)
+(defconstant +open-mode-no-repair+  #b100000000)
 
 (define-foreign-library libkyotocabinet
   (:unix "libkyotocabinet.so"))
@@ -266,6 +272,8 @@
   (srcnum size_t)
   (mode :uint32))
 
+(in-package :kc.ffi.cur)
+
 (defcfun "kcdbcursor" (:pointer kccur)
   "Create a polymorphic cursor object."
   (db (:pointer kcdb)))
@@ -360,6 +368,8 @@ atomically."
 (defcfun "kccuremsg" :string
   "Get the supplement message of the last happened error."
   (cur (:pointer kccur)))
+
+(in-package :kc.ffi.idx)
 
 (defcfun "kcidxnew" (:pointer kcidx)
   "Create an index database object.")

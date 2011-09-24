@@ -1,22 +1,17 @@
-(defpackage :kyoto-cabinet.database
-  (:nicknames :kc.db)
-  (:use :cl :cffi :kc.ffi.core)
-  (:import-from :alexandria :once-only)
-  (:shadow :open :close :get))
 (in-package :kc.db)
 
-(defconstant +open-mode-reader+     #b000000001)
-(defconstant +open-mode-writer+     #b000000010)
-(defconstant +open-mode-create+     #b000000100)
-(defconstant +open-mode-truncate+   #b000001000)
-(defconstant +open-mode-auto-tran+  #b000010000)
-(defconstant +open-mode-auto-sync+  #b000100000)
-(defconstant +open-mode-no-lock+    #b001000000)
-(defconstant +open-mode-try-lock+   #b010000000)
-(defconstant +open-mode-no-repair+  #b100000000)
+(deftype octet ()
+  "An octet. An alias of (unsigned-byte 8)."
+  '(unsigned-byte 8))
 
-(setf (symbol-function 'new) #'kcdbnew)
-(setf (symbol-function 'del) #'kcdbdel)
+(defun new ()
+  "Creates a polymorphic database object and returns it. The object must be
+released with DELETE when it's no longer in use."
+  (kcdbnew))
+
+(defun delete (db)
+  "Destroys the database object DB."
+  (kcdbdel db))
 
 (defun open (db path
              &key
@@ -34,6 +29,8 @@
              (lock-p t)
              (block-p t)
              (repair-p t))
+  "Opens the database file specified by PATH and associates it with the database
+object DB."
   (let* ((mode (logand (case direction
                          (:input +open-mode-reader+)
                          (:output +open-mode-writer+)
@@ -53,6 +50,8 @@
             (translate-from-foreign r :boolean))))))
 
 (defun close (db)
+  "Closes the database file associated with the database object DB. Returns T if
+succeed, or NIL otherwise."
   (translate-from-foreign (kcdbclose db) :boolean))
 
 (defmacro with-db ((db filespec &rest args) &body body)
@@ -61,13 +60,38 @@
        (unwind-protect (when (open ,db ,filespec ,@args)
                          (unwind-protect (progn ,@body)
                            (close ,db)))
-         (del ,var)))))
+         (delete ,db)))))
 
-(defun get (db key)
-  (with-foreign-object (sp 'size_t)
-    (with-foreign-string ((kbuf ksiz) key)
-      (let ((ptr (kcdbget db kbuf ksiz sp)))
-        (if (null-pointer-p ptr)
-            nil	; fix here
-            (unwind-protect (foreign-string-to-lisp ptr)
-              (kcfree ptr)))))))
+(defun x->foreign-string (x)
+  (etypecase x
+    (string (foreign-string-alloc x))))
+
+(declaim (inline foreign-string->string))
+(defun foreign-string->string (fs)
+  (foreign-string-to-lisp fs))
+
+(defun foreign-string->octets (fs len)
+  (do* ((octets (make-array len :element-type 'octet))
+        (n 0 (1+ n))
+        (octet (mem-aref fs :uchar n) (mem-aref fs :uchar n)))
+       ((zerop octet) octets)
+    (setf (aref octets n) octet)))
+
+(defun get/fs (db key-buf key-len &key (string-p t))
+  "Retrieves the value of a record with a foreign string key."
+  (with-foreign-object (value-len 'size_t)
+    (let ((value-ptr (kcdbget db key-buf key-len value-len)))
+      (if (null-pointer-p value-ptr)
+          nil
+          (unwind-protect
+               (if string-p
+                   (foreign-string->string value-ptr)
+                   (foreign-string->octets value-ptr
+                                           (mem-ref value-len 'size_t)))
+            (kcfree value-ptr))))))
+
+(defun get (db key &rest rest)
+  "Retrieves the value of a record."
+  (multiple-value-bind (key-buf key-len) (x->foreign-string key)
+    (unwind-protect (apply #'get/fs db key-buf key-len rest)
+      (foreign-string-free key-buf))))
