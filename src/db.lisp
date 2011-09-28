@@ -4,6 +4,14 @@
   "An octet. An alias of (unsigned-byte 8)."
   '(unsigned-byte 8))
 
+(deftype octets (&optional (size '*))
+  "A vector of octet."
+  `(vector octet ,size))
+
+(deftype simple-octets (&optional (size '*))
+  "A simple-array of octet."
+  `(simple-array octet (,size)))
+
 (defun new ()
   "Creates a polymorphic database object and returns it. The object must be
 released with DELETE when it's no longer in use."
@@ -62,9 +70,27 @@ succeed, or NIL otherwise."
                            (close ,db)))
          (delete ,db)))))
 
+(declaim (inline string->foreign-string))
+(defun string->foreign-string (string)
+  (foreign-string-alloc string))
+
+(defun octets->foreign-string (octets)
+  (let* ((octets-len (length octets))
+         (fs-len (1+ octets-len))
+         (fs (foreign-alloc :uchar :count fs-len)))
+    (do* ((n 0 (1+ n)))
+         ((= n octets-len))
+      (setf (mem-aref fs :uchar n) (aref octets n)))
+    (setf (mem-aref fs :uchar octets-len) 0)))
+
 (defun x->foreign-string (x)
-  (etypecase x
-    (string (foreign-string-alloc x))))
+  (typecase x
+    (string
+     (string->foreign-string x))
+    ((or octets simple-octets)
+     (octets->foreign-string x))
+    (t
+     (kc.ext:x->foreign-string x))))
 
 (declaim (inline foreign-string->string))
 (defun foreign-string->string (fs)
@@ -78,7 +104,12 @@ succeed, or NIL otherwise."
     (setf (aref octets n) octet)))
 
 (defun get/fs (db key-buf key-len &key (string-p t))
-  "Retrieves the value of a record with a foreign string key."
+  "Finds the record in the database associated with DB whose key is KEY-BUF and
+returns the associated value. KEY-BUF is a CFFI's foreign string and KEY-LEN is
+the length of KEY-BUF.
+
+If STRING-P is true, returns the value as a Lisp string. Returns as a vector
+otherwise."
   (with-foreign-object (value-len 'size_t)
     (let ((value-ptr (kcdbget db key-buf key-len value-len)))
       (if (null-pointer-p value-ptr)
@@ -91,7 +122,13 @@ succeed, or NIL otherwise."
             (kcfree value-ptr))))))
 
 (defun get (db key &rest rest)
-  "Retrieves the value of a record."
+  "Finds the record in the database associated with DB whose key is KEY and
+returns the associated value. This function supports the same keyword arguments
+as GET/FS.
+
+It accepts a string and an octet vector as KEY. If you would like to support
+more types, it's a convenient way to define a specialized method of
+KC.EXT:X->FOREIGN-STRING."
   (multiple-value-bind (key-buf key-len) (x->foreign-string key)
     (unwind-protect (apply #'get/fs db key-buf key-len rest)
-      (foreign-string-free key-buf))))
+      (foreign-free key-buf))))
