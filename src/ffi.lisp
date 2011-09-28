@@ -56,13 +56,13 @@
   "Destroy a database object."
   (db (:pointer kcdb)))
 
-(defcfun "kcdbopen" :boolean
+(defcfun "kcdbopen" :int32
   "Open a database file."
   (db (:pointer kcdb))
   (path :string)
   (mode :uint32))
 
-(defcfun "kcdbclose" :boolean
+(defcfun "kcdbclose" :int32
   "Close the database file."
   (db (:pointer kcdb)))
 
@@ -165,41 +165,41 @@
   (ksiz size_t)
   (sp (:pointer size_t)))
 
-(defcfun "kcdbsetbulk" :int64
-  "Store records at once."
-  (db (:pointer kcdb))
-  (recs (:pointer kcrec))
-  (rnum size_t)
-  (atomic :boolean))
+;(defcfun "kcdbsetbulk" :int64
+;  "Store records at once."
+;  (db (:pointer kcdb))
+;  (recs (:pointer kcrec))
+;  (rnum size_t)
+;  (atomic :boolean))
 
-(defcfun "kcdbremovebulk" :int64
-  "Remove records at once."
-  (db (:pointer kcdb))
-  (keys (:pointer kcstr))
-  (knum size_t)
-  (atomic :boolean))
+;(defcfun "kcdbremovebulk" :int64
+;  "Remove records at once."
+;  (db (:pointer kcdb))
+;  (keys (:pointer kcstr))
+;  (knum size_t)
+;  (atomic :boolean))
 
-(defcfun "kcdbgetbulk" :int64
-  "Retrieve records at once."
-  (db (:pointer kcdb))
-  (keys (:pointer kcstr))
-  (knum size_t)
-  (recs (:pointer kcrec))
-  (atomic :boolean))
+;(defcfun "kcdbgetbulk" :int64
+;  "Retrieve records at once."
+;  (db (:pointer kcdb))
+;  (keys (:pointer kcstr))
+;  (knum size_t)
+;  (recs (:pointer kcrec))
+;  (atomic :boolean))
 
-(defcfun "kcdbsync" :boolean
-  "Synchronize updated contents with the file and the device."
-  (db (:pointer kcdb))
-  (hard :boolean)
-  (proc kcfileproc)
-  (opq :pointer))
+;(defcfun "kcdbsync" :boolean
+;  "Synchronize updated contents with the file and the device."
+;  (db (:pointer kcdb))
+;  (hard :boolean)
+;  (proc kcfileproc)
+;  (opq :pointer))
 
-(defcfun "kcdboccupy" :boolean
-  "Occupy database by locking and do something meanwhile."
-  (db (:pointer kcdb))
-  (writable :boolean)
-  (proc kcfileproc)
-  (opq :pointer))
+;(defcfun "kcdboccupy" :boolean
+;  "Occupy database by locking and do something meanwhile."
+;  (db (:pointer kcdb))
+;  (writable :boolean)
+;  (proc kcfileproc)
+;  (opq :pointer))
   
 (defcfun "kcdbcopy" :boolean
   "Create a copy of the database file."
@@ -274,106 +274,106 @@
 
 (in-package :kc.ffi.cur)
 
-(defcfun "kcdbcursor" (:pointer kccur)
-  "Create a polymorphic cursor object."
-  (db (:pointer kcdb)))
+;(defcfun "kcdbcursor" (:pointer kccur)
+;  "Create a polymorphic cursor object."
+;  (db (:pointer kcdb)))
 
-(defcfun "kccurdel" :void
-  "Destroy a cursor object."
-  (cur (:pointer kccur)))
+;(defcfun "kccurdel" :void
+;  "Destroy a cursor object."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccuraccept" :boolean
-  "Accept a visitor to the current record."
-  (cur (:pointer kccur))
-  (fullproc kcvisitfull)
-  (opq :pointer)
-  (writable :boolean)
-  (step :boolean))
+;(defcfun "kccuraccept" :boolean
+;  "Accept a visitor to the current record."
+;  (cur (:pointer kccur))
+;  (fullproc kcvisitfull)
+;  (opq :pointer)
+;  (writable :boolean)
+;  (step :boolean))
 
-(defcfun "kccursetvalue" :boolean
-  "Set the value of the current record."
-  (cur (:pointer kccur))
-  (vbuf (:pointer :char))
-  (vsiz size_t)
-  (step :boolean))
+;(defcfun "kccursetvalue" :boolean
+;  "Set the value of the current record."
+;  (cur (:pointer kccur))
+;  (vbuf (:pointer :char))
+;  (vsiz size_t)
+;  (step :boolean))
 
-(defcfun "kccurremove" :boolean
-  "Remove the current record."
-  (cur (:pointer kccur)))
+;(defcfun "kccurremove" :boolean
+;  "Remove the current record."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccurgetkey" (:pointer :char)
-  "Get the key of the current record."
-  (cur (:pointer kccur))
-  (sp (:pointer size_t))
-  (step :boolean))
+;(defcfun "kccurgetkey" (:pointer :char)
+;  "Get the key of the current record."
+;  (cur (:pointer kccur))
+;  (sp (:pointer size_t))
+;  (step :boolean))
 
-(defcfun "kccurgetvalue" (:pointer :char)
-  "Get the value of the current record."
-  (cur (:pointer kccur))
-  (sp (:pointer size_t))
-  (step :boolean))
+;(defcfun "kccurgetvalue" (:pointer :char)
+;  "Get the value of the current record."
+;  (cur (:pointer kccur))
+;  (sp (:pointer size_t))
+;  (step :boolean))
 
-(defcfun "kccurget" (:pointer :char)
-  "Get a pair of the key and the value of the current record."
-  (cur (:pointer kccur))
-  (ksp (:pointer size_t))
-  (vbp (:pointer (:pointer :char)))
-  (vsp (:pointer size_t))
-  (step :boolean))
+;(defcfun "kccurget" (:pointer :char)
+;  "Get a pair of the key and the value of the current record."
+;  (cur (:pointer kccur))
+;  (ksp (:pointer size_t))
+;  (vbp (:pointer (:pointer :char)))
+;  (vsp (:pointer size_t))
+;  (step :boolean))
 
-(defcfun "kccurseize" (:pointer :char)
-  "Get a pair of the key and the value of the current record and remove it
-atomically."
-  (cur (:pointer kccur))
-  (ksp (:pointer size_t))
-  (vbp (:pointer (:pointer :char)))
-  (vsp (:pointer size_t)))
+;(defcfun "kccurseize" (:pointer :char)
+;  "Get a pair of the key and the value of the current record and remove it
+;atomically."
+;  (cur (:pointer kccur))
+;  (ksp (:pointer size_t))
+;  (vbp (:pointer (:pointer :char)))
+;  (vsp (:pointer size_t)))
 
-(defcfun "kccurjump" :boolean
-  "Jump the cursor to the first record for forward scan."
-  (cur (:pointer kccur)))
+;(defcfun "kccurjump" :boolean
+;  "Jump the cursor to the first record for forward scan."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccurjumpkey" :boolean
-  "Jump the cursor to a record for forward scan."
-  (cur (:pointer kccur))
-  (kbuf (:pointer :char))
-  (ksiz size_t))
+;(defcfun "kccurjumpkey" :boolean
+;  "Jump the cursor to a record for forward scan."
+;  (cur (:pointer kccur))
+;  (kbuf (:pointer :char))
+;  (ksiz size_t))
 
-(defcfun "kccurjumpback" :boolean
-  "Jump the cursor to the last record for backward scan."
-  (cur (:pointer kccur)))
+;(defcfun "kccurjumpback" :boolean
+;  "Jump the cursor to the last record for backward scan."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccurjumpbackkey" :boolean
-  "Jump the cursor to a record for backward scan."
-  (cur (:pointer kccur))
-  (kbuf (:pointer :char))
-  (ksiz size_t))
+;(defcfun "kccurjumpbackkey" :boolean
+;  "Jump the cursor to a record for backward scan."
+;  (cur (:pointer kccur))
+;  (kbuf (:pointer :char))
+;  (ksiz size_t))
 
-(defcfun "kccurstep" :boolean
-  "Step the cursor to the next record."
-  (cur (:pointer kccur)))
+;(defcfun "kccurstep" :boolean
+;  "Step the cursor to the next record."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccurstepback" :boolean
-  "Step the cursor to the previous record."
-  (cur (:pointer kccur)))
+;(defcfun "kccurstepback" :boolean
+;  "Step the cursor to the previous record."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccurdb" (:pointer kcdb)
-  "Get the database object."
-  (cur (:pointer kccur)))
+;(defcfun "kccurdb" (:pointer kcdb)
+;  "Get the database object."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccurecode" :int32
-  "Get the code of the last happened error."
-  (cur (:pointer kccur)))
+;(defcfun "kccurecode" :int32
+;  "Get the code of the last happened error."
+;  (cur (:pointer kccur)))
 
-(defcfun "kccuremsg" :string
-  "Get the supplement message of the last happened error."
-  (cur (:pointer kccur)))
+;(defcfun "kccuremsg" :string
+;  "Get the supplement message of the last happened error."
+;  (cur (:pointer kccur)))
 
 (in-package :kc.ffi.idx)
 
-(defcfun "kcidxnew" (:pointer kcidx)
-  "Create an index database object.")
+;(defcfun "kcidxnew" (:pointer kcidx)
+;  "Create an index database object.")
 
-(defcfun "kcidxdel" :void
-  "Destroy a database object."
-  (idx (:pointer kcidx)))
+;(defcfun "kcidxdel" :void
+;  "Destroy a database object."
+;  (idx (:pointer kcidx)))

@@ -30,5 +30,10 @@
   (:nicknames :kc.db)
   (:use :cl :cffi :kc.ffi.core)
   (:import-from :alexandria :once-only)
-  (:shadow :delete :open :close :get)
-  (:export :octet :new :delete :open :close :with-db :get/fs :get))
+  (:shadow :delete :open :close :get :set)
+  (:export :octet :new :delete :open :close :with-db :get/fs :get :set/fs :set))
+
+(defpackage :kyoto-cabinet.extension
+  (:nicknames :kc.ext)
+  (:use :cl)
+  (:export :x->foreign-string))

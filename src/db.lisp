@@ -39,10 +39,10 @@ released with DELETE when it's no longer in use."
              (repair-p t))
   "Opens the database file specified by PATH and associates it with the database
 object DB."
-  (let* ((mode (logand (case direction
+  (let* ((mode (logior (case direction
                          (:input +open-mode-reader+)
                          (:output +open-mode-writer+)
-                         (:io #.(logand +open-mode-reader+ +open-mode-writer+))
+                         (:io #.(logior +open-mode-reader+ +open-mode-writer+))
                          (t 0))
                        (if (eq if-exists :overwrite) +open-mode-truncate+ 0)
                        (if (eq if-does-not-exist :create) +open-mode-create+ 0)
@@ -131,4 +131,21 @@ more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
   (multiple-value-bind (key-buf key-len) (x->foreign-string key)
     (unwind-protect (apply #'get/fs db key-buf key-len rest)
+      (foreign-free key-buf))))
+
+(defun set/fs (db key-buf key-len value-buf value-len &key (mode :set))
+  (translate-from-foreign (funcall (ecase mode
+                                     (:set #'kcdbset)
+                                     (:add #'kcdbadd)
+                                     (:replace #'kcdbreplace))
+                                   db key-buf key-len value-buf value-len)
+                          :boolean))
+
+(defun set (db key value &rest rest)
+  (multiple-value-bind (key-buf key-len) (x->foreign-string key)
+    (unwind-protect
+         (multiple-value-bind (value-buf value-len) (x->foreign-string value)
+           (unwind-protect
+                (apply #'set/fs db key-buf key-len value-buf value-len rest)
+             (foreign-free value-buf)))
       (foreign-free key-buf))))
