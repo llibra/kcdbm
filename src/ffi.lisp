@@ -79,7 +79,7 @@
 ;kcdbiterate
 ;kcdbscanpara
 
-(defcfun "kcdbset" :boolean
+(defcfun "kcdbset" :int32
   "Set the value of a record."
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
@@ -87,7 +87,7 @@
   (vbuf (:pointer :char))
   (vsiz size_t))
 
-(defcfun "kcdbadd" :boolean
+(defcfun "kcdbadd" :int32
   "Add a record."
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
@@ -95,7 +95,7 @@
   (vbuf (:pointer :char))
   (vsiz size_t))
 
-(defcfun "kcdbreplace" :boolean
+(defcfun "kcdbreplace" :int32
   "Replace the value of a record."
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
@@ -103,7 +103,7 @@
   (vbuf (:pointer :char))
   (vsiz size_t))
 
-(defcfun "kcdbappend" :boolean
+(defcfun "kcdbappend" :int32
   "Append the value of a record."
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
@@ -127,7 +127,7 @@
   (num :double)
   (orig :double))
 
-(defcfun "kcdbcas" :boolean
+(defcfun "kcdbcas" :int32
   "Perform compare-and-swap."
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
@@ -137,7 +137,7 @@
   (ovbuf (:pointer :char))
   (ovsiz size_t))
 
-(defcfun "kcdbremove" :boolean
+(defcfun "kcdbremove" :int32
   "Remove a record."
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
@@ -201,36 +201,36 @@
 ;  (proc kcfileproc)
 ;  (opq :pointer))
   
-(defcfun "kcdbcopy" :boolean
+(defcfun "kcdbcopy" :int32
   "Create a copy of the database file."
   (db (:pointer kcdb))
   (dest :string))
 
-(defcfun "kcdbbegintran" :boolean
+(defcfun "kcdbbegintran" :int32
   "Begin transaction."
   (db (:pointer kcdb))
-  (hard :boolean))
+  (hard :int32))
 
-(defcfun "kcdbbegintrantry" :boolean
+(defcfun "kcdbbegintrantry" :int32
   "Try to begin transaction."
   (db (:pointer kcdb))
-  (hard :boolean))
+  (hard :int32))
   
-(defcfun "kcdbendtran" :boolean
+(defcfun "kcdbendtran" :int32
   "End transaction."
   (db (:pointer kcdb))
-  (commit :boolean))
+  (commit :int32))
 
-(defcfun "kcdbclear" :boolean
+(defcfun "kcdbclear" :int32
   "Remove all records."
   (db (:pointer kcdb)))
 
-(defcfun "kcdbdumpsnap" :boolean
+(defcfun "kcdbdumpsnap" :int32
   "Dump records into a file."
   (db (:pointer kcdb))
   (dest :string))
 
-(defcfun "kcdbloadsnap" :boolean
+(defcfun "kcdbloadsnap" :int32
   "Load records from a file."
   (db (:pointer kcdb))
   (src :string))
@@ -265,7 +265,7 @@
   (strary (:pointer (:pointer :char)))
   (max size_t))
 
-(defcfun "kcdbmerge" :boolean
+(defcfun "kcdbmerge" :int32
   "Merge records from other databases."
   (db (:pointer kcdb))
   (srcary (:pointer (:pointer kcdb)))
