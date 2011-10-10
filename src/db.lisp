@@ -12,6 +12,17 @@
   "A simple-array of octet."
   `(simple-array octet (,size)))
 
+(defmacro with-allocated-foreign-string ((var len-var form) &body body)
+  `(multiple-value-bind (,var ,len-var) ,form
+     (unwind-protect (progn ,@body) (foreign-free ,var))))
+
+(defmacro with-allocated-foreign-strings (bindings &body body)
+  (destructuring-bind (binding . rest) bindings
+    (if rest
+        `(with-allocated-foreign-string ,binding
+           (with-allocated-foreign-strings ,rest ,@body))
+        `(with-allocated-foreign-string ,binding ,@body))))
+
 (defun new ()
   "Creates a polymorphic database object and returns it. The object must be
 released with DELETE when it's no longer in use."
@@ -77,11 +88,11 @@ succeed, or NIL otherwise."
 (defun octets->foreign-string (octets)
   (let* ((octets-len (length octets))
          (fs-len (1+ octets-len))
-         (fs (foreign-alloc :uchar :count fs-len)))
+         (fs (foreign-alloc :uint8 :count fs-len)))
     (do* ((n 0 (1+ n)))
          ((= n octets-len))
-      (setf (mem-aref fs :uchar n) (aref octets n)))
-    (setf (mem-aref fs :uchar octets-len) 0)))
+      (setf (mem-aref fs :uint8 n) (aref octets n)))
+    (setf (mem-aref fs :uint8 octets-len) 0)))
 
 (defun x->foreign-string (x)
   (typecase x
@@ -99,14 +110,14 @@ succeed, or NIL otherwise."
 (defun foreign-string->octets (fs len)
   (do* ((octets (make-array len :element-type 'octet))
         (n 0 (1+ n))
-        (octet (mem-aref fs :uchar n) (mem-aref fs :uchar n)))
+        (octet (mem-aref fs :uint8 n) (mem-aref fs :uint8 n)))
        ((zerop octet) octets)
     (setf (aref octets n) octet)))
 
 (defun get/fs (db key-buf key-len &key (string-p t))
-  "Finds the record in the database associated with DB whose key is KEY-BUF and
-returns the associated value. KEY-BUF is a CFFI's foreign string and KEY-LEN is
-the length of KEY-BUF.
+  "Finds the record whose key is KEY-BUF in the database associated with DB and
+returns the associated value. If there's no corresponding record, returns NIL.
+KEY-BUF is a CFFI's foreign string and KEY-LEN is the length of KEY-BUF.
 
 If STRING-P is true, returns the value as a Lisp string. Returns as a vector
 otherwise."
@@ -122,30 +133,78 @@ otherwise."
             (kcfree value-ptr))))))
 
 (defun get (db key &rest rest)
-  "Finds the record in the database associated with DB whose key is KEY and
-returns the associated value. This function supports the same keyword arguments
-as GET/FS.
+  "Finds the record whose key is KEY in the database associated with DB and
+returns the associated value. If there's no corresponding record, returns NIL.
+This function supports the same keyword arguments as GET/FS.
 
 It accepts a string and an octet vector as KEY. If you would like to support
 more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
-  (multiple-value-bind (key-buf key-len) (x->foreign-string key)
-    (unwind-protect (apply #'get/fs db key-buf key-len rest)
-      (foreign-free key-buf))))
+  (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
+    (apply #'get/fs db key-buf key-len rest)))
 
-(defun set/fs (db key-buf key-len value-buf value-len &key (mode :set))
-  (translate-from-foreign (funcall (ecase mode
-                                     (:set #'kcdbset)
-                                     (:add #'kcdbadd)
-                                     (:replace #'kcdbreplace))
-                                   db key-buf key-len value-buf value-len)
-                          :boolean))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun set-method->ffi-symbol (method)
+    (ecase method
+      (:set 'kcdbset)
+      (:add 'kcdbadd)
+      (:replace 'kcdbreplace)
+      (:append 'kcdbappend))))
+
+(define-compiler-macro set/fs
+    (&whole form db key-buf key-len value-buf value-len &key (method :set)
+     &environment env)
+  (if (constantp method env)
+      `(translate-from-foreign
+        (,(set-method->ffi-symbol method)
+         ,db ,key-buf ,key-len ,value-buf ,value-len)
+        :boolean)
+      form))
+
+(defun set/fs (db key-buf key-len value-buf value-len &key (method :set))
+  "Sets the value of the record whose key is KEY-BUF in the database associated
+with DB to VALUE-BUF. KEY-BUF and VALUE-BUF are CFFI's foreign strings and
+KEY-LEN and VALUE-LEN are the lengths of KEY-BUF and VALUE-BUF. 
+
+METHOD is a method to update the value of a record. It should be one of :SET,
+:ADD :REPLACE or :APPEND. Each method corresponds to kcdbset, kcdbadd,
+kcdbreplace, or kcdbappend.
+
+If succeeds to set a value, T is returned. Otherwise, NIL is returned."
+  (translate-from-foreign
+   (funcall (set-method->ffi-symbol method)
+            db key-buf key-len value-buf value-len)
+   :boolean))
+
+;;; For compiler macro expansion of set/fs.
+(define-compiler-macro set (db key value &rest rest)
+  `(with-allocated-foreign-strings
+       ((key-buf key-len (x->foreign-string ,key))
+        (value-buf value-len (x->foreign-string ,value)))
+     (set/fs ,db key-buf key-len value-buf value-len ,@rest)))
 
 (defun set (db key value &rest rest)
-  (multiple-value-bind (key-buf key-len) (x->foreign-string key)
-    (unwind-protect
-         (multiple-value-bind (value-buf value-len) (x->foreign-string value)
-           (unwind-protect
-                (apply #'set/fs db key-buf key-len value-buf value-len rest)
-             (foreign-free value-buf)))
-      (foreign-free key-buf))))
+  "Sets the value of the record whose key is KEY in the database associated with
+DB KEY to VALUE. This function supports the same keyword arguments as SET/FS.
+
+It accepts a string and an octet vector as KEY and VALUE. Like GET, if you would
+like to support more types, it's a convenient way to define a specialized method
+of KC.EXT:X->FOREIGN-STRING.
+
+If succeeds to set a value, T is returned. Otherwise, NIL is returned."
+  (with-allocated-foreign-strings
+      ((key-buf key-len (x->foreign-string key))
+       (value-buf value-len (x->foreign-string value)))
+    (apply #'set/fs db key-buf key-len value-buf value-len rest)))
+
+(defun add (db key value)
+  "Corresponds to kcdbadd. A wrapper of SET."
+  (set db key value :method :add))
+
+(defun replace (db key value)
+  "Corresponds to kcdbreplace. A wrapper of SET."
+  (set db key value :method :replace))
+
+(defun append (db key value)
+  "Corresponds to kcdbappend. A wrapper of SET."
+  (set db key value :method :append))
