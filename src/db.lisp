@@ -66,12 +66,12 @@ object DB."
       (let ((r (kcdbopen db p mode)))
         (if (and (zerop r) error-p)
             (error "~a" (kcdbemsg db))
-            (translate-from-foreign r :boolean))))))
+            (convert-from-foreign r :boolean))))))
 
 (defun close (db)
   "Closes the database file associated with the database object DB. Returns T if
 succeed, or NIL otherwise."
-  (translate-from-foreign (kcdbclose db) :boolean))
+  (convert-from-foreign (kcdbclose db) :boolean))
 
 (defmacro with-db ((db filespec &rest args) &body body)
   (once-only (filespec)
@@ -111,7 +111,7 @@ succeed, or NIL otherwise."
   (do* ((octets (make-array len :element-type 'octet))
         (n 0 (1+ n))
         (octet (mem-aref fs :uint8 n) (mem-aref fs :uint8 n)))
-       ((zerop octet) octets)
+       ((= n len) octets)
     (setf (aref octets n) octet)))
 
 (defun get/fs (db key-buf key-len &key (string-p t))
@@ -123,6 +123,7 @@ If STRING-P is true, returns the value as a Lisp string. Returns as a vector
 otherwise."
   (with-foreign-object (value-len 'size_t)
     (let ((value-ptr (kcdbget db key-buf key-len value-len)))
+      (break "~a" (mem-aref value-len 'size_t))
       (if (null-pointer-p value-ptr)
           nil
           (unwind-protect
@@ -155,7 +156,7 @@ KC.EXT:X->FOREIGN-STRING."
     (&whole form db key-buf key-len value-buf value-len &key (method :set)
      &environment env)
   (if (constantp method env)
-      `(translate-from-foreign
+      `(convert-from-foreign
         (,(set-method->ffi-symbol method)
          ,db ,key-buf ,key-len ,value-buf ,value-len)
         :boolean)
@@ -171,7 +172,7 @@ METHOD is a method to update the value of a record. It should be one of :SET,
 kcdbreplace, or kcdbappend.
 
 If succeeds to set a value, T is returned. Otherwise, NIL is returned."
-  (translate-from-foreign
+  (convert-from-foreign
    (funcall (set-method->ffi-symbol method)
             db key-buf key-len value-buf value-len)
    :boolean))
