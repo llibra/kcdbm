@@ -63,10 +63,9 @@ object DB."
                        (if block-p 0 +open-mode-try-lock+)
                        (if repair-p 0 +open-mode-no-repair+))))
     (with-foreign-string (p path)
-      (let ((r (kcdbopen db p mode)))
-        (if (and (zerop r) error-p)
-            (error "~a" (kcdbemsg db))
-            (convert-from-foreign r :boolean))))))
+      (if (zerop (kcdbopen db p mode))
+          t
+          (error "Can't open the database file ~a. (~a)" path (kcdbemsg db))))))
 
 (defun close (db)
   "Closes the database file associated with the database object DB. Returns T if
@@ -123,7 +122,6 @@ If STRING-P is true, returns the value as a Lisp string. Returns as a vector
 otherwise."
   (with-foreign-object (value-len 'size_t)
     (let ((value-ptr (kcdbget db key-buf key-len value-len)))
-      (break "~a" (mem-aref value-len 'size_t))
       (if (null-pointer-p value-ptr)
           nil
           (unwind-protect
@@ -209,3 +207,21 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
 (defun append (db key value)
   "Corresponds to kcdbappend. A wrapper of SET."
   (set db key value :method :append))
+
+(defun begin-transaction (db &key (blocking-p t) physical-p)
+  (convert-from-foreign
+   (funcall (if blocking-p #'kcdbbegintran #'kcdbbegintrantry)
+            db (convert-to-foreign physical-p :boolean))
+   :boolean))
+
+(defun end-transaction (db &key (commit-p t))
+  (convert-from-foreign
+   (kcdbendtran db (convert-to-foreign commit-p :boolean))
+   :boolean))
+
+;(defmacro with-transaction ((db &rest args) &body body)
+;  `(if (begin-transaction ,db ,@args)
+;       (let ((commit-p nil))
+;         (unwind-protect (setf commit-p (progn ,@body))
+;           (end-transaction ,db :commit-p ,commit-p)))
+;       (values nil nil)))
