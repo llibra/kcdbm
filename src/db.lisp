@@ -64,21 +64,24 @@ object DB."
                        (if repair-p 0 +open-mode-no-repair+))))
     (with-foreign-string (p path)
       (if (zerop (kcdbopen db p mode))
-          t
-          (error "Can't open the database file ~a. (~a)" path (kcdbemsg db))))))
+          (error "Can't open the database file ~a. (~a)" path (kcdbemsg db))
+          t))))
 
 (defun close (db)
   "Closes the database file associated with the database object DB. Returns T if
 succeed, or NIL otherwise."
-  (convert-from-foreign (kcdbclose db) :boolean))
+  (if (zerop (kcdbclose db))
+      (error "Can't close the database file ~a. (~a)"
+             (kcdbpath db) (kcdbemsg db))
+      t))
 
 (defmacro with-db ((db filespec &rest args) &body body)
-  (once-only (filespec)
-    `(let ((,db (new)))
-       (unwind-protect (when (open ,db ,filespec ,@args)
-                         (unwind-protect (progn ,@body)
-                           (close ,db)))
-         (delete ,db)))))
+  `(let ((,db (new)))
+     (unwind-protect (progn
+                       (open ,db ,filespec ,@args)
+                       (unwind-protect (progn ,@body)
+                         (close ,db)))
+       (delete ,db))))
 
 (declaim (inline string->foreign-string))
 (defun string->foreign-string (string)
@@ -113,6 +116,14 @@ succeed, or NIL otherwise."
        ((= n len) octets)
     (setf (aref octets n) octet)))
 
+(defun accept (db key-buf key-len full-fn empty-fn
+               &key (opaque (null-pointer)) (writable t))
+  (let ((writable (convert-to-foreign writable :boolean)))
+    (if (zerop (kcdbaccept db key-buf key-len full-fn empty-fn opaque writable))
+        (error "Can't accept the visitor functions. (~a)" (kcdbemsg db))
+        t)))
+
+;;; GET/FS is deprecated. Use ACCEPT instead.
 (defun get/fs (db key-buf key-len &key (string-p t))
   "Finds the record whose key is KEY-BUF in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
@@ -123,7 +134,8 @@ otherwise."
   (with-foreign-object (value-len 'size_t)
     (let ((value-ptr (kcdbget db key-buf key-len value-len)))
       (if (null-pointer-p value-ptr)
-          nil
+          (error "Can't get the value associated with the key. (~a)"
+                 (kcdbemsg db))
           (unwind-protect
                (if string-p
                    (foreign-string->string value-ptr)
@@ -144,22 +156,19 @@ KC.EXT:X->FOREIGN-STRING."
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun set-method->ffi-symbol (method)
-    (ecase method
-      (:set 'kcdbset)
-      (:add 'kcdbadd)
-      (:replace 'kcdbreplace)
-      (:append 'kcdbappend))))
+    (find-symbol (format nil "KCDB~a" method))))
 
 (define-compiler-macro set/fs
     (&whole form db key-buf key-len value-buf value-len &key (method :set)
      &environment env)
   (if (constantp method env)
-      `(convert-from-foreign
-        (,(set-method->ffi-symbol method)
-         ,db ,key-buf ,key-len ,value-buf ,value-len)
-        :boolean)
+      `(if (zerop (,(set-method->ffi-symbol method)
+                   ,db ,key-buf ,key-len ,value-buf ,value-len))
+           (error "Can't set the value associated with the key. (~a)" (kcdbemsg db))
+           t)
       form))
 
+;;; SET/FS is deprecated. Use ACCEPT instead.
 (defun set/fs (db key-buf key-len value-buf value-len &key (method :set))
   "Sets the value of the record whose key is KEY-BUF in the database associated
 with DB to VALUE-BUF. KEY-BUF and VALUE-BUF are CFFI's foreign strings and
@@ -170,10 +179,10 @@ METHOD is a method to update the value of a record. It should be one of :SET,
 kcdbreplace, or kcdbappend.
 
 If succeeds to set a value, T is returned. Otherwise, NIL is returned."
-  (convert-from-foreign
-   (funcall (set-method->ffi-symbol method)
-            db key-buf key-len value-buf value-len)
-   :boolean))
+  (if (zerop (funcall (set-method->ffi-symbol method)
+                      db key-buf key-len value-buf value-len))
+      (error "Can't set the value associated with the key. (~a)" (kcdbemsg db))
+      t))
 
 ;;; For compiler macro expansion of set/fs.
 (define-compiler-macro set (db key value &rest rest)
