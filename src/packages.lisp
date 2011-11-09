@@ -29,10 +29,11 @@
 (defpackage :kyoto-cabinet.database
   (:nicknames :kc.db)
   (:use :cl :cffi :kc.ffi.core)
-  (:import-from :alexandria :once-only)
+  (:import-from :alexandria :with-gensyms :once-only)
   (:shadow :delete :open :close :get :set :replace :append)
   (:export :octet :new :delete :open :close :with-db :get/fs :get :set/fs :set
-           :add :replace :append))
+           :add :replace :append :begin-transaction :end-transaction
+           :with-transaction))
 
 (defpackage :kyoto-cabinet.extension
   (:nicknames :kc.ext)

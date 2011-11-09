@@ -32,40 +32,24 @@ released with DELETE when it's no longer in use."
   "Destroys the database object DB."
   (kcdbdel db))
 
-(defun open (db path
-             &key
-             (direction :input)      ; :input, :output, :io, :probe
-             (if-exists :append)     ; :overwrite, :append
-             (if-does-not-exist (cond ((or (eq direction :probe)
-                                           (eq direction :input)
-                                           (eq if-exists :overwrite)
-                                           (eq if-exists :append))
-                                       :error)
-                                      (t :create)))
-             (error-p t)
-             (auto-transaction-p nil)
-             (auto-sync-p nil)
-             (lock-p t)
-             (block-p t)
-             (repair-p t))
+(defbitfield open-mode
+  (:reader 1)
+  :writer
+  :create
+  :truncate
+  :auto-tran
+  :auto-sync
+  :no-lock
+  :try-lock
+  :no-repair)
+
+(defun open (db path &rest mode)
   "Opens the database file specified by PATH and associates it with the database
 object DB."
-  (let* ((mode (logior (case direction
-                         (:input +open-mode-reader+)
-                         (:output +open-mode-writer+)
-                         (:io #.(logior +open-mode-reader+ +open-mode-writer+))
-                         (t 0))
-                       (if (eq if-exists :overwrite) +open-mode-truncate+ 0)
-                       (if (eq if-does-not-exist :create) +open-mode-create+ 0)
-                       (if auto-transaction-p +open-mode-auto-tran+ 0)
-                       (if auto-sync-p +open-mode-auto-sync+ 0)
-                       (if lock-p 0 +open-mode-no-lock+)
-                       (if block-p 0 +open-mode-try-lock+)
-                       (if repair-p 0 +open-mode-no-repair+))))
-    (with-foreign-string (p path)
-      (if (zerop (kcdbopen db p mode))
-          (error "Can't open the database file ~a. (~a)" path (kcdbemsg db))
-          t))))
+  (with-foreign-string (p path)
+    (if (zerop (kcdbopen db p (foreign-bitfield-value 'open-mode mode)))
+        (error "Can't open the database file ~a. (~a)" path (kcdbemsg db))
+        t)))
 
 (defun close (db)
   "Closes the database file associated with the database object DB. Returns T if
@@ -152,21 +136,22 @@ It accepts a string and an octet vector as KEY. If you would like to support
 more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
-    (apply #'get/fs db key-buf key-len rest)))
+    (apply #'get/fs db key-buf (1- key-len) rest)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun set-method->ffi-symbol (method)
-    (find-symbol (format nil "KCDB~a" method))))
+    (find-symbol (format nil "KCDB~a" method) :kc.ffi.core)))
 
 (define-compiler-macro set/fs
     (&whole form db key-buf key-len value-buf value-len &key (method :set)
      &environment env)
-  (if (constantp method env)
-      `(if (zerop (,(set-method->ffi-symbol method)
-                   ,db ,key-buf ,key-len ,value-buf ,value-len))
-           (error "Can't set the value associated with the key. (~a)" (kcdbemsg db))
-           t)
-      form))
+  (once-only (db)
+    (if (constantp method env)
+        `(if (zerop (,(set-method->ffi-symbol method)
+                      ,db ,key-buf ,key-len ,value-buf ,value-len))
+             (error "Can't set the value associated with the key. (~a)" (kcdbemsg ,db))
+             t)
+        form)))
 
 ;;; SET/FS is deprecated. Use ACCEPT instead.
 (defun set/fs (db key-buf key-len value-buf value-len &key (method :set))
@@ -189,7 +174,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   `(with-allocated-foreign-strings
        ((key-buf key-len (x->foreign-string ,key))
         (value-buf value-len (x->foreign-string ,value)))
-     (set/fs ,db key-buf key-len value-buf value-len ,@rest)))
+     (set/fs ,db key-buf (1- key-len) value-buf (1- value-len) ,@rest)))
 
 (defun set (db key value &rest rest)
   "Sets the value of the record whose key is KEY in the database associated with
@@ -203,7 +188,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   (with-allocated-foreign-strings
       ((key-buf key-len (x->foreign-string key))
        (value-buf value-len (x->foreign-string value)))
-    (apply #'set/fs db key-buf key-len value-buf value-len rest)))
+    (apply #'set/fs db key-buf (1- key-len) value-buf (1- value-len) rest)))
 
 (defun add (db key value)
   "Corresponds to kcdbadd. A wrapper of SET."
@@ -218,19 +203,20 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   (set db key value :method :append))
 
 (defun begin-transaction (db &key (blocking-p t) physical-p)
-  (convert-from-foreign
-   (funcall (if blocking-p #'kcdbbegintran #'kcdbbegintrantry)
-            db (convert-to-foreign physical-p :boolean))
-   :boolean))
+  (if (zerop (funcall (if blocking-p #'kcdbbegintran #'kcdbbegintrantry)
+                      db (convert-to-foreign physical-p :boolean)))
+      (error "Can't begin a transaction. (~a)" (kcdbemsg db))
+      t))
 
 (defun end-transaction (db &key (commit-p t))
-  (convert-from-foreign
-   (kcdbendtran db (convert-to-foreign commit-p :boolean))
-   :boolean))
+  (if (zerop (kcdbendtran db (convert-to-foreign commit-p :boolean)))
+      (error "Can't end the current transaction. (~a)" (kcdbemsg db))
+      t))
 
-;(defmacro with-transaction ((db &rest args) &body body)
-;  `(if (begin-transaction ,db ,@args)
-;       (let ((commit-p nil))
-;         (unwind-protect (setf commit-p (progn ,@body))
-;           (end-transaction ,db :commit-p ,commit-p)))
-;       (values nil nil)))
+(defmacro with-transaction ((db &rest args) &body body)
+  (with-gensyms (commit-p)
+    (once-only (db)
+      `(let ((,commit-p nil))
+         (begin-transaction ,db ,@args)
+         (unwind-protect (prog1 (progn ,@body) (setf ,commit-p t))
+           (end-transaction ,db :commit-p ,commit-p))))))
