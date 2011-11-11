@@ -1,0 +1,4 @@
+.*~$
+.*\.kch
+.*\.kct
+^test.lisp$
