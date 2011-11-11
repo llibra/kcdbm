@@ -74,7 +74,16 @@
   "Get the supplement message of the last happened error."
   (db (:pointer kcdb)))
 
-;kcdbaccept
+(defcfun "kcdbaccept" :int32
+  "Accept a visitor to a record."
+  (db (:pointer kcdb))
+  (kbuf (:pointer :char))
+  (ksiz size_t)
+  (fullproc :pointer)
+  (emptyproc :pointer)
+  (opq :pointer)
+  (writable :int32))
+
 ;kcdbacceptbulk
 ;kcdbiterate
 ;kcdbscanpara

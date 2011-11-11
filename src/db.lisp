@@ -101,13 +101,12 @@ succeed, or NIL otherwise."
     (setf (aref octets n) octet)))
 
 (defun accept (db key-buf key-len full-fn empty-fn
-               &key (opaque (null-pointer)) (writable t))
+               &key (opaque (load-time-value (null-pointer))) (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdbaccept db key-buf key-len full-fn empty-fn opaque writable))
         (error "Can't accept the visitor functions. (~a)" (kcdbemsg db))
         t)))
 
-;;; GET/FS is deprecated. Use ACCEPT instead.
 (defun get/fs (db key-buf key-len &key (string-p t))
   "Finds the record whose key is KEY-BUF in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
@@ -153,7 +152,6 @@ KC.EXT:X->FOREIGN-STRING."
              t)
         form)))
 
-;;; SET/FS is deprecated. Use ACCEPT instead.
 (defun set/fs (db key-buf key-len value-buf value-len &key (method :set))
   "Sets the value of the record whose key is KEY-BUF in the database associated
 with DB to VALUE-BUF. KEY-BUF and VALUE-BUF are CFFI's foreign strings and
