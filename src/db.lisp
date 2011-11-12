@@ -32,6 +32,12 @@ released with DELETE when it's no longer in use."
   "Destroys the database object DB."
   (kcdbdel db))
 
+(defun path (db)
+  "Returns the path of the database object DB."
+  (let ((path-ptr (kcdbpath db)))
+    (unwind-protect (foreign-string-to-lisp p)
+      (kcfree p))))
+
 (defbitfield open-mode
   (:reader 1)
   :writer
@@ -55,8 +61,7 @@ object DB."
   "Closes the database file associated with the database object DB. Returns T if
 succeed, or NIL otherwise."
   (if (zerop (kcdbclose db))
-      (error "Can't close the database file ~a. (~a)"
-             (kcdbpath db) (kcdbemsg db))
+      (error "Can't close the database file ~a. (~a)" (path db) (kcdbemsg db))
       t))
 
 (defmacro with-db ((db filespec &rest args) &body body)

@@ -252,7 +252,7 @@
   "Get the size of the database file."
   (db (:pointer kcdb)))
 
-(defcfun "kcdbpath" :string
+(defcfun "kcdbpath" :pointer
   "Get the path of the database file."
   (db (:pointer kcdb)))
 
