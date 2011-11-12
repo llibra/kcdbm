@@ -100,12 +100,16 @@ succeed, or NIL otherwise."
        ((= n len) octets)
     (setf (aref octets n) octet)))
 
-(defun accept (db key-buf key-len full-fn empty-fn
-               &key (opaque (load-time-value (null-pointer))) (writable t))
+(defun accept/fs (db key-buf key-len full-fn empty-fn
+                  &key (opaque (load-time-value (null-pointer))) (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdbaccept db key-buf key-len full-fn empty-fn opaque writable))
         (error "Can't accept the visitor functions. (~a)" (kcdbemsg db))
         t)))
+
+(defun accept (db key full-fn empty-fn &rest rest)
+  (with-allocated-foreign-string ((key-buf key-len) (x->foreign-string key))
+    (apply #'accept/fs db key-buf (1- key-len) full-fn empty-fn rest)))
 
 (defun get/fs (db key-buf key-len &key (string-p t))
   "Finds the record whose key is KEY-BUF in the database associated with DB and
