@@ -113,7 +113,7 @@ succeed, or NIL otherwise."
         t)))
 
 (defun accept (db key full-fn empty-fn &rest rest)
-  (with-allocated-foreign-string ((key-buf key-len) (x->foreign-string key))
+  (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
     (apply #'accept/fs db key-buf (1- key-len) full-fn empty-fn rest)))
 
 (defun get/fs (db key-buf key-len &key (string-p t))
