@@ -28,6 +28,8 @@
 
 (defpackage :kyoto-cabinet.common
   (:nicknames :kc.common)
+  (:documentation "Contains common parts of the whole of KCDBM except the FFI
+layer. Types, utilities, etc..")
   (:use :cl :cffi :kc.ffi.core)
   (:export :open-mode
 
@@ -40,14 +42,24 @@
 
            :set-method->ffi-symbol))
 
+(defpackage :kyoto-cabinet.database.foreign-string
+  (:nicknames :kc.db.fs)
+  (:documentation "Contains low-level database APIs. The APIs in this package
+directly accept a foreign string of CFFI. They exist for speed.")
+  (:use :cl :cffi :kc.ffi.core :kc.common)
+  (:shadow :get :set)
+  (:import-from :alexandria :once-only)
+  (:export :accept :get :set))
+
 (defpackage :kyoto-cabinet.database
   (:nicknames :kc.db)
+  (:documentation "Contains high-level database APIs. The APIs in this package
+convert various data automatically.")
   (:use :cl :cffi :kc.ffi.core :kc.common)
-  (:import-from :alexandria :with-gensyms :once-only)
   (:shadow :delete :open :close :get :set :replace :append)
-  (:export :octet :new :delete :open :close :accept :with-db :get/fs :get
-           :set/fs :set :add :replace :append :begin-transaction
-           :end-transaction :with-transaction))
+  (:import-from :alexandria :with-gensyms :once-only)
+  (:export :new :delete :open :close :accept :with-db :get :set :add :replace
+           :append :begin-transaction :end-transaction :with-transaction))
 
 (defpackage :kyoto-cabinet.extension
   (:nicknames :kc.ext)
