@@ -35,8 +35,8 @@ released with DELETE when it's no longer in use."
 (defun path (db)
   "Returns the path of the database object DB."
   (let ((path-ptr (kcdbpath db)))
-    (unwind-protect (foreign-string-to-lisp p)
-      (kcfree p))))
+    (unwind-protect (foreign-string-to-lisp path-ptr)
+      (kcfree path-ptr))))
 
 (defbitfield open-mode
   (:reader 1)
