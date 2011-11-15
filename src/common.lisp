@@ -67,6 +67,5 @@
        ((= n len) octets)
     (setf (aref octets n) octet)))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun set-method->ffi-symbol (method)
-    (find-symbol (format nil "KCDB~a" method) :kc.ffi.core)))
+(defun set-method->ffi-symbol (method)
+  (find-symbol (format nil "KCDB~a" method) :kc.ffi.core))
