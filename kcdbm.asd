@@ -6,10 +6,10 @@
   :author "Manabu Takayama <learn.libra@gmail.com>"
   :license "MIT License"
   :depends-on (:alexandria :cffi)
-  
   :components ((:module "src"
                         :serial t
                         :components ((:file "packages")
                                      (:file "ffi")
                                      (:file "ext")
+                                     (:file "common")
                                      (:file "db")))))

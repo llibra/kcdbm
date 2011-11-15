@@ -26,9 +26,23 @@
   (:use :cl :cffi :kc.ffi.core)
   )
 
+(defpackage :kyoto-cabinet.common
+  (:nicknames :kc.common)
+  (:use :cl :cffi :kc.ffi.core)
+  (:export :open-mode
+
+           :octet :octets :simple-octets
+
+           :with-allocated-foreign-string :with-allocated-foreign-strings
+
+           :string->foreign-string :octets->foreign-string :x->foreign-string
+           :foreign-string->string :foreign-string->octets
+
+           :set-method->ffi-symbol))
+
 (defpackage :kyoto-cabinet.database
   (:nicknames :kc.db)
-  (:use :cl :cffi :kc.ffi.core)
+  (:use :cl :cffi :kc.ffi.core :kc.common)
   (:import-from :alexandria :with-gensyms :once-only)
   (:shadow :delete :open :close :get :set :replace :append)
   (:export :octet :new :delete :open :close :accept :with-db :get/fs :get
