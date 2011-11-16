@@ -1,21 +1,9 @@
-(in-package :kc.ffi.core)
-
-(defconstant +open-mode-reader+     #b000000001)
-(defconstant +open-mode-writer+     #b000000010)
-(defconstant +open-mode-create+     #b000000100)
-(defconstant +open-mode-truncate+   #b000001000)
-(defconstant +open-mode-auto-tran+  #b000010000)
-(defconstant +open-mode-auto-sync+  #b000100000)
-(defconstant +open-mode-no-lock+    #b001000000)
-(defconstant +open-mode-try-lock+   #b010000000)
-(defconstant +open-mode-no-repair+  #b100000000)
+(in-package :kc.ffi.common)
 
 (define-foreign-library libkyotocabinet
   (:unix "libkyotocabinet.so"))
 
 (use-foreign-library libkyotocabinet)
-
-;;;; Types
 
 ;;; It's klugy and not a right way to assume that the size of size_t equals
 ;;; the pointer's one. But it's an easy way and mostly correct.
@@ -24,30 +12,70 @@
         (8 :uint64)
         (4 :uint32)))
 
+(defctype kcvisitfull :pointer
+  "Call back function to visit a full record.")
+
+(defctype kcvisitempty :pointer
+  "Call back function to visit an empty record.")
+
+(defctype kcfileproc :pointer)
+
 (defcstruct kcdb
   "C wrapper of polymorphic database."
   (db :pointer))
 
-;;;; Variables
+(defcstruct kcstr
+  "Binary string of byte array."
+  (buf (:pointer :char))
+  (size size_t))
 
-(defcvar ("KCVERSION" +kcversion+) :string
+(defcstruct kcrec
+  "Key-Value record."
+  (key kcstr)
+  (value kcstr))
+
+;;; Error Codes
+(defconstant +kcesuccess+   0)
+(defconstant +kcenoimpl+    1)
+(defconstant +kceinvalid+   2)
+(defconstant +kcenorepos+   3)
+(defconstant +kcenoperm+    4)
+(defconstant +kcebroken+    5)
+(defconstant +kceduprec+    6)
+(defconstant +kcenorec+     7)
+(defconstant +kcelogic+     8)
+(defconstant +kcesystem+    9)
+(defconstant +kcemisc+      15)
+
+;;; Open Modes
+(defconstant +kcoreader+    #b000000001)
+(defconstant +kcowriter+    #b000000010)
+(defconstant +kcocreate+    #b000000100)
+(defconstant +kcotruncate+  #b000001000)
+(defconstant +kcoautotran+  #b000010000)
+(defconstant +kcoautosync+  #b000100000)
+(defconstant +kconolock+    #b001000000)
+(defconstant +kcotrylock+   #b010000000)
+(defconstant +kconorepair+  #b100000000)
+
+(defcvar ("KCVERSION" +kcversion+) (:pointer :char)
   "The package version.")
 
-(defcvar ("KCVISNOP" +kcvisnop+) :pointer
+(defcvar ("KCVISNOP" +kcvisnop+) (:pointer :char)
   "Special pointer for no operation by the visiting function.")
 
-(defcvar ("KCVISREMOVE" +kcvisremove+) :pointer
+(defcvar ("KCVISREMOVE" +kcvisremove+) (:pointer :char)
   "Special pointer to remove the record by the visiting function.")
-
-;;;; Functions
 
 (defcfun "kcfree" :void
   "Release a region allocated in the library."
   (ptr :pointer))
 
-(defcfun "kcecodename" :string
+(defcfun "kcecodename" (:pointer :char)
   "Get the readable string of an error code."
   (code :int32))
+
+(in-package :kc.ffi.db)
 
 (defcfun "kcdbnew" (:pointer kcdb)
   "Create a polymorphic database object.")
@@ -59,7 +87,7 @@
 (defcfun "kcdbopen" :int32
   "Open a database file."
   (db (:pointer kcdb))
-  (path :string)
+  (path (:pointer :char))
   (mode :uint32))
 
 (defcfun "kcdbclose" :int32
@@ -70,7 +98,7 @@
   "Get the code of the last happened error."
   (db (:pointer kcdb)))
 
-(defcfun "kcdbemsg" :string
+(defcfun "kcdbemsg" (:pointer :char)
   "Get the supplement message of the last happened error."
   (db (:pointer kcdb)))
 
@@ -79,14 +107,34 @@
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
   (ksiz size_t)
-  (fullproc :pointer)
-  (emptyproc :pointer)
+  (fullproc kcvisitfull)
+  (emptyproc kcvisitempty)
   (opq :pointer)
   (writable :int32))
 
-;kcdbacceptbulk
-;kcdbiterate
-;kcdbscanpara
+(defcfun "kcdbacceptbulk" :int32
+  "Accept a visitor to multiple records at once."
+  (db (:pointer kcdb))
+  (keys (:pointer kcstr))
+  (knum size_t)
+  (fullproc kcvisitfull)
+  (emptyproc kcvisitempty)
+  (opq :pointer)
+  (writable :int32))
+
+(defcfun "kcdbiterate" :int32
+  "Iterate to accept a visitor for each record."
+  (db (:pointer kcdb))
+  (fullproc kcvisitfull)
+  (opq :pointer)
+  (writable :int32))
+
+(defcfun "kcdbscanpara" :int32
+  "Scan each record in parallel."
+  (db (:pointer kcdb))
+  (fullproc kcvisitfull)
+  (opq :pointer)
+  (thnum size_t))
 
 (defcfun "kcdbset" :int32
   "Set the value of a record."
@@ -174,46 +222,46 @@
   (ksiz size_t)
   (sp (:pointer size_t)))
 
-;(defcfun "kcdbsetbulk" :int64
-;  "Store records at once."
-;  (db (:pointer kcdb))
-;  (recs (:pointer kcrec))
-;  (rnum size_t)
-;  (atomic :boolean))
+(defcfun "kcdbsetbulk" :int64
+  "Store records at once."
+  (db (:pointer kcdb))
+  (recs (:pointer kcrec))
+  (rnum size_t)
+  (atomic :int32))
 
-;(defcfun "kcdbremovebulk" :int64
-;  "Remove records at once."
-;  (db (:pointer kcdb))
-;  (keys (:pointer kcstr))
-;  (knum size_t)
-;  (atomic :boolean))
+(defcfun "kcdbremovebulk" :int64
+  "Remove records at once."
+  (db (:pointer kcdb))
+  (keys (:pointer kcstr))
+  (knum size_t)
+  (atomic :int32))
 
-;(defcfun "kcdbgetbulk" :int64
-;  "Retrieve records at once."
-;  (db (:pointer kcdb))
-;  (keys (:pointer kcstr))
-;  (knum size_t)
-;  (recs (:pointer kcrec))
-;  (atomic :boolean))
+(defcfun "kcdbgetbulk" :int64
+  "Retrieve records at once."
+  (db (:pointer kcdb))
+  (keys (:pointer kcstr))
+  (knum size_t)
+  (recs (:pointer kcrec))
+  (atomic :int32))
 
-;(defcfun "kcdbsync" :boolean
-;  "Synchronize updated contents with the file and the device."
-;  (db (:pointer kcdb))
-;  (hard :boolean)
-;  (proc kcfileproc)
-;  (opq :pointer))
+(defcfun "kcdbsync" :int32
+  "Synchronize updated contents with the file and the device."
+  (db (:pointer kcdb))
+  (hard :int32)
+  (proc kcfileproc)
+  (opq :pointer))
 
-;(defcfun "kcdboccupy" :boolean
-;  "Occupy database by locking and do something meanwhile."
-;  (db (:pointer kcdb))
-;  (writable :boolean)
-;  (proc kcfileproc)
-;  (opq :pointer))
+(defcfun "kcdboccupy" :int32
+  "Occupy database by locking and do something meanwhile."
+  (db (:pointer kcdb))
+  (writable :int32)
+  (proc kcfileproc)
+  (opq :pointer))
   
 (defcfun "kcdbcopy" :int32
   "Create a copy of the database file."
   (db (:pointer kcdb))
-  (dest :string))
+  (dest (:pointer :char)))
 
 (defcfun "kcdbbegintran" :int32
   "Begin transaction."
@@ -237,12 +285,12 @@
 (defcfun "kcdbdumpsnap" :int32
   "Dump records into a file."
   (db (:pointer kcdb))
-  (dest :string))
+  (dest (:pointer :char)))
 
 (defcfun "kcdbloadsnap" :int32
   "Load records from a file."
   (db (:pointer kcdb))
-  (src :string))
+  (src (:pointer :char)))
 
 (defcfun "kcdbcount" :int64
   "Get the number of records."
@@ -252,25 +300,25 @@
   "Get the size of the database file."
   (db (:pointer kcdb)))
 
-(defcfun "kcdbpath" :pointer
+(defcfun "kcdbpath" (:pointer :char)
   "Get the path of the database file."
   (db (:pointer kcdb)))
 
-(defcfun "kcdbstatus" :string
+(defcfun "kcdbstatus" (:pointer :char)
   "Get the miscellaneous status information."
   (db (:pointer kcdb)))
 
 (defcfun "kcdbmatchprefix" :int64
   "Get keys matching a prefix string."
   (db (:pointer kcdb))
-  (prefix :string)
+  (prefix (:pointer :char))
   (strary (:pointer (:pointer :char)))
   (max size_t))
   
 (defcfun "kcdbmatchregex" :int64
   "Get keys matching a regular expression string."
   (db (:pointer kcdb))
-  (regex :string)
+  (regex (:pointer :char))
   (strary (:pointer (:pointer :char)))
   (max size_t))
 

@@ -1,10 +1,14 @@
-(in-package :kc.db.fs)
+(in-package :kc.fs.db)
+
+(defun error-message (db)
+  (foreign-string-to-lisp (kcdbemsg db)))
 
 (defun accept (db key-buf key-len full-fn empty-fn
                &key (opaque (load-time-value (null-pointer))) (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdbaccept db key-buf key-len full-fn empty-fn opaque writable))
-        (error "Can't accept the visitor functions. (~a)" (kcdbemsg db))
+        (error "Can't accept the visitor functions. (~a)"
+               (error-message db))
         t)))
 
 (defun get (db key-buf key-len &key (string-p t))
@@ -18,7 +22,7 @@ otherwise."
     (let ((value-ptr (kcdbget db key-buf key-len value-len)))
       (if (null-pointer-p value-ptr)
           (error "Can't get the value associated with the key. (~a)"
-                 (kcdbemsg db))
+                 (error-message db))
           (unwind-protect
                (if string-p
                    (foreign-string->string value-ptr)
@@ -33,7 +37,8 @@ otherwise."
     (if (constantp method env)
         `(if (zerop (,(set-method->ffi-symbol method)
                       ,db ,key-buf ,key-len ,value-buf ,value-len))
-             (error "Can't set the value associated with the key. (~a)" (kcdbemsg ,db))
+             (error "Can't set the value associated with the key. (~a)"
+                    (error-message ,db))
              t)
         form)))
 
@@ -49,7 +54,8 @@ kcdbreplace, or kcdbappend.
 If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   (if (zerop (funcall (set-method->ffi-symbol method)
                       db key-buf key-len value-buf value-len))
-      (error "Can't set the value associated with the key. (~a)" (kcdbemsg db))
+      (error "Can't set the value associated with the key. (~a)"
+             (error-message db))
       t))
 
 (in-package :kc.db)
@@ -74,14 +80,15 @@ released with DELETE when it's no longer in use."
 object DB."
   (with-foreign-string (p path)
     (if (zerop (kcdbopen db p (foreign-bitfield-value 'open-mode mode)))
-        (error "Can't open the database file ~a. (~a)" path (kcdbemsg db))
+        (error "Can't open the database file ~a. (~a)" path (error-message db))
         t)))
 
 (defun close (db)
   "Closes the database file associated with the database object DB. Returns T if
 succeed, or NIL otherwise."
   (if (zerop (kcdbclose db))
-      (error "Can't close the database file ~a. (~a)" (path db) (kcdbemsg db))
+      (error "Can't close the database file ~a. (~a)"
+             (path db) (error-message db))
       t))
 
 (defmacro with-db ((db filespec &rest args) &body body)
@@ -94,7 +101,7 @@ succeed, or NIL otherwise."
 
 (defun accept (db key full-fn empty-fn &rest rest)
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
-    (apply #'kc.db.fs:accept db key-buf (1- key-len) full-fn empty-fn rest)))
+    (apply #'kc.fs.db:accept db key-buf (1- key-len) full-fn empty-fn rest)))
 
 (defun get (db key &rest rest)
   "Finds the record whose key is KEY in the database associated with DB and
@@ -105,14 +112,14 @@ It accepts a string and an octet vector as KEY. If you would like to support
 more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
-    (apply #'kc.db.fs:get db key-buf (1- key-len) rest)))
+    (apply #'kc.fs.db:get db key-buf (1- key-len) rest)))
 
 ;;; For compiler macro expansion of KC.DB.FS:SET.
 (define-compiler-macro set (db key value &rest rest)
   `(with-allocated-foreign-strings
        ((key-buf key-len (x->foreign-string ,key))
         (value-buf value-len (x->foreign-string ,value)))
-     (kc.db.fs:set ,db key-buf (1- key-len) value-buf (1- value-len) ,@rest)))
+     (kc.fs.db:set ,db key-buf (1- key-len) value-buf (1- value-len) ,@rest)))
 
 (defun set (db key value &rest rest)
   "Sets the value of the record whose key is KEY in the database associated with
@@ -126,7 +133,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   (with-allocated-foreign-strings
       ((key-buf key-len (x->foreign-string key))
        (value-buf value-len (x->foreign-string value)))
-    (apply #'kc.db.fs:set db key-buf (1- key-len) value-buf (1- value-len)
+    (apply #'kc.fs.db:set db key-buf (1- key-len) value-buf (1- value-len)
            rest)))
 
 (defun add (db key value)
@@ -144,12 +151,12 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
 (defun begin-transaction (db &key (blocking-p t) physical-p)
   (if (zerop (funcall (if blocking-p #'kcdbbegintran #'kcdbbegintrantry)
                       db (convert-to-foreign physical-p :boolean)))
-      (error "Can't begin a transaction. (~a)" (kcdbemsg db))
+      (error "Can't begin a transaction. (~a)" (error-message db))
       t))
 
 (defun end-transaction (db &key (commit-p t))
   (if (zerop (kcdbendtran db (convert-to-foreign commit-p :boolean)))
-      (error "Can't end the current transaction. (~a)" (kcdbemsg db))
+      (error "Can't end the current transaction. (~a)" (error-message db))
       t))
 
 (defmacro with-transaction ((db &rest args) &body body)

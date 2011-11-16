@@ -68,4 +68,4 @@
     (setf (aref octets n) octet)))
 
 (defun set-method->ffi-symbol (method)
-  (find-symbol (format nil "KCDB~a" method) :kc.ffi.core))
+  (find-symbol (format nil "KCDB~a" method) :kc.ffi))
