@@ -13,3 +13,11 @@
                                      (:file "ext")
                                      (:file "common")
                                      (:file "db")))))
+
+(defsystem :kcdbm-test
+  :depends-on (:kcdbm :fiveam)
+  :components ((:module "t"
+                        :serial t
+                        :components ((:file "packages")
+                                     (:file "suites")
+                                     (:file "db")))))
