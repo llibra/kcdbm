@@ -1,3 +1,5 @@
+(in-package :cl-user)
+
 (defpackage :kyoto-cabinet.ffi.core
   (:nicknames :kc.ffi.core)
   (:use :cl :cffi)

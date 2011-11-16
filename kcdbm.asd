@@ -1,3 +1,4 @@
+(in-package :cl-user)
 (defpackage :kyoto-cabinet.asdf (:use :cl :asdf))
 (in-package :kyoto-cabinet.asdf)
 
