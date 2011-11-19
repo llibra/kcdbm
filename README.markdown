@@ -12,6 +12,7 @@ Requirements
 * [Kyoto Cabinet](http://fallabs.com/kyotocabinet/)
 * [Alexandria](http://common-lisp.net/project/alexandria/)
 * [CFFI](http://common-lisp.net/project/cffi/)
+* [CL-ADT](https://github.com/m2ym/cl-adt)
 
 License
 -------
