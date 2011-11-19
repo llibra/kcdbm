@@ -89,19 +89,20 @@ layer. Types, utilities, etc..")
   (:documentation "Contains low-level database APIs. The APIs in this package
 directly accept a foreign string of CFFI. They exist for speed.")
   (:use :cl :cffi :kc.ffi :kc.common)
-  (:shadow :get :set)
+  (:shadow :get :remove :set)
   (:import-from :alexandria :once-only)
-  (:export :error-message :accept :get :set))
+  (:import-from :cl-adt :ematch)
+  (:export :error-message :accept :get :set :remove))
 
 (defpackage :kyoto-cabinet.database
   (:nicknames :kc.db)
   (:documentation "Contains high-level database APIs. The APIs in this package
 convert various data automatically.")
   (:use :cl :cffi :kc.ffi :kc.common)
-  (:shadow :append :close :count :delete :get :open :replace :set)
+  (:shadow :append :close :count :delete :get :open :remove :replace :set)
   (:import-from :alexandria :with-gensyms :once-only)
   (:import-from :kc.fs.db :error-message)
   (:import-from :cl-adt :match :ematch)
   (:export :new :delete :open :close :error-message :accept :with-db :get :seize
-           :set :add :replace :append :begin-transaction :end-transaction
-           :with-transaction :path :clear :count :size))
+           :set :add :replace :append :remove :begin-transaction
+           :end-transaction :with-transaction :path :clear :count :size))

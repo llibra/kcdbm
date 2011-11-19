@@ -44,6 +44,17 @@
     (kc.db:append db "x" "+")
     (5am:is (equal "+++" (kc.db:get db "x")))))
 
+(5am:test remove
+  (with-io (db)
+    (kc.db:clear db)
+    (kc.db:set db "x" "1")
+    (kc.db:set db "y" "2")
+    (kc.db:remove db "x")
+    (kc.db:remove db "y")
+    (5am:is (zerop (kc.db:count db)))
+    (5am:signals error (kc.db:get db "x"))
+    (5am:signals error (kc.db:get db "y"))))
+
 (5am:test clear
   (with-io (db)
     (kc.db:clear db)

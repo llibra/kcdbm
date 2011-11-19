@@ -56,6 +56,11 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
              (error-message db))
       t))
 
+(defun remove (db key-buf key-len)
+  (ematch (kcdbremove db key-buf key-len)
+    (1 t)
+    (0 (error "Can't remove the record. (~a)" (error-message db)))))
+
 (in-package :kc.db)
 
 (defun new ()
@@ -148,6 +153,10 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
 (defun append (db key value)
   "Corresponds to kcdbappend. A wrapper of SET."
   (set db key value :method :append))
+
+(defun remove (db key)
+  (with-foreign-string ((key-buf key-len) key :null-terminated-p nil)
+    (kc.fs.db:remove db key-buf key-len)))
 
 (defun begin-transaction (db &key (blocking-p t) physical-p)
   (if (zerop (funcall (if blocking-p #'kcdbbegintran #'kcdbbegintrantry)
