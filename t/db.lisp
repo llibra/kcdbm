@@ -4,6 +4,10 @@
 
 (defparameter *test-db-name* "test.kch")
 
+(defmacro with-in ((var) &body body)
+  `(kc.db:with-db (,var *test-db-name* :reader)
+     ,@body))
+
 (defmacro with-out ((var) &body body)
   `(kc.db:with-db (,var *test-db-name* :writer :create)
      ,@body))
@@ -58,3 +62,9 @@
     (5am:is (= (kc.db:count db) 1))
     (kc.db:set db "y" "2")
     (5am:is (= (kc.db:count db) 2))))
+
+(5am:test size
+  (5am:is (= (with-io (db)
+               (kc.db:size db))
+             (with-open-file (s *test-db-name*)
+               (file-length s)))))

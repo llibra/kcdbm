@@ -178,3 +178,9 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (-1 (error "Can't count the records in the database. (~a)"
                (error-message db)))
     (n n)))
+
+(defun size (db)
+  (match (kcdbsize db)
+    (-1 (error "Can't calculate the size of the database. (~a)"
+               (error-message db)))
+    (size size)))
