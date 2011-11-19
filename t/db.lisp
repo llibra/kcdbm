@@ -23,6 +23,15 @@
     (kc.db:set db "x" "1")
     (5am:is (equal "1" (kc.db:get db "x")))))
 
+(5am:test seize
+  (with-io (db)
+    (flet ((test (fn)
+             (kc.db:set db "x" "1")
+             (5am:finishes (funcall fn))
+             (5am:signals error (kc.db:get db "x"))))
+      (test (lambda () (kc.db:get db "x" :remove-p t)))
+      (test (lambda () (kc.db:seize db "x"))))))
+
 (5am:test append
   (with-io (db)
     (kc.db:set db "x" "+")

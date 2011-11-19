@@ -101,6 +101,6 @@ convert various data automatically.")
   (:shadow :delete :open :close :get :set :replace :append)
   (:import-from :alexandria :with-gensyms :once-only)
   (:import-from :kc.fs.db :error-message)
-  (:export :new :delete :open :close :error-message :accept :with-db :get :set
-           :add :replace :append :begin-transaction :end-transaction
+  (:export :new :delete :open :close :error-message :accept :with-db :get :seize
+           :set :add :replace :append :begin-transaction :end-transaction
            :with-transaction :path))

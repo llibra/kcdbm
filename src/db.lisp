@@ -11,7 +11,7 @@
                (error-message db))
         t)))
 
-(defun get (db key-buf key-len &key (as :string))
+(defun get (db key-buf key-len &key (as :string) remove-p)
   "Finds the record whose key is KEY-BUF in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
 KEY-BUF is a CFFI's foreign string and KEY-LEN is the length of KEY-BUF.
@@ -19,7 +19,8 @@ KEY-BUF is a CFFI's foreign string and KEY-LEN is the length of KEY-BUF.
 If STRING-P is true, returns the value as a Lisp string. Returns as a vector
 otherwise."
   (with-foreign-object (value-len 'size_t)
-    (let ((value-ptr (kcdbget db key-buf key-len value-len)))
+    (let ((value-ptr (funcall (if remove-p #'kcdbseize #'kcdbget) db key-buf
+                              key-len value-len)))
       (if (null-pointer-p value-ptr)
           (error "Can't get the value associated with the key. (~a)"
                  (error-message db))
@@ -110,6 +111,9 @@ more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
     (apply #'kc.fs.db:get db key-buf (1- key-len) rest)))
+
+(defun seize (db key &key (as :string))
+  (get db key :as as :remove-p t))
 
 ;;; For compiler macro expansion of KC.DB.FS:SET.
 (define-compiler-macro set (db key value &rest rest)
