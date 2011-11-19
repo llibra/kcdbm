@@ -167,3 +167,14 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
          (begin-transaction ,db ,@args)
          (unwind-protect (prog1 (progn ,@body) (setf ,commit-p t))
            (end-transaction ,db :commit-p ,commit-p))))))
+
+(defun clear (db)
+  (ematch (kcdbclear db)
+    (1 t)
+    (0 (error "Can't clear the database. (~a)" (error-message db)))))
+
+(defun count (db)
+  (match (kcdbcount db)
+    (-1 (error "Can't count the records in the database. (~a)"
+               (error-message db)))
+    (n n)))

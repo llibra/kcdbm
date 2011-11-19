@@ -6,7 +6,7 @@
   :version "0.0"
   :author "Manabu Takayama <learn.libra@gmail.com>"
   :license "MIT License"
-  :depends-on (:alexandria :cffi)
+  :depends-on (:alexandria :cffi :cl-adt)
   :components ((:module "src"
                         :serial t
                         :components ((:file "packages")

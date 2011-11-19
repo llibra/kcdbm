@@ -98,9 +98,10 @@ directly accept a foreign string of CFFI. They exist for speed.")
   (:documentation "Contains high-level database APIs. The APIs in this package
 convert various data automatically.")
   (:use :cl :cffi :kc.ffi :kc.common)
-  (:shadow :delete :open :close :get :set :replace :append)
+  (:shadow :append :close :count :delete :get :open :replace :set)
   (:import-from :alexandria :with-gensyms :once-only)
   (:import-from :kc.fs.db :error-message)
+  (:import-from :cl-adt :match :ematch)
   (:export :new :delete :open :close :error-message :accept :with-db :get :seize
            :set :add :replace :append :begin-transaction :end-transaction
-           :with-transaction :path))
+           :with-transaction :path :clear :count))
