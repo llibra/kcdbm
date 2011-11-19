@@ -11,7 +11,7 @@
                (error-message db))
         t)))
 
-(defun get (db key-buf key-len &key (string-p t))
+(defun get (db key-buf key-len &key (as :string))
   "Finds the record whose key is KEY-BUF in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
 KEY-BUF is a CFFI's foreign string and KEY-LEN is the length of KEY-BUF.
@@ -24,10 +24,7 @@ otherwise."
           (error "Can't get the value associated with the key. (~a)"
                  (error-message db))
           (unwind-protect
-               (if string-p
-                   (foreign-string->string value-ptr)
-                   (foreign-string->octets value-ptr
-                                           (mem-ref value-len 'size_t)))
+               (foreign-string->x as value-ptr (mem-ref value-len 'size_t))
             (kcfree value-ptr))))))
 
 (define-compiler-macro set

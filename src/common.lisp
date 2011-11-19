@@ -67,5 +67,14 @@
        ((= n len) octets)
     (setf (aref octets n) octet)))
 
+(defun foreign-string->x (type fs len)
+  (case type
+    (:string
+     (foreign-string->string fs))
+    (:octets
+     (foreign-string->octets fs len))
+    (t
+     (kc.ext:foreign-string->x type fs len))))
+
 (defun set-method->ffi-symbol (method)
   (find-symbol (format nil "KCDB~a" method) :kc.ffi))

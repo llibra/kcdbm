@@ -66,7 +66,7 @@
 (defpackage :kyoto-cabinet.extension
   (:nicknames :kc.ext)
   (:use :cl)
-  (:export :x->foreign-string))
+  (:export :x->foreign-string :foreign-string->x))
 
 (defpackage :kyoto-cabinet.common
   (:nicknames :kc.common)
@@ -80,7 +80,7 @@ layer. Types, utilities, etc..")
            :with-allocated-foreign-string :with-allocated-foreign-strings
 
            :string->foreign-string :octets->foreign-string :x->foreign-string
-           :foreign-string->string :foreign-string->octets
+           :foreign-string->string :foreign-string->octets :foreign-string->x
 
            :set-method->ffi-symbol))
 
