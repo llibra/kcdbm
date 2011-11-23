@@ -12,8 +12,8 @@
   `(kc.db:with-db (,var *test-db-name* :writer :create)
      ,@body))
 
-(defmacro with-io ((var) &body body)
-  `(kc.db:with-db (,var *test-db-name* :reader :writer :create)
+(defmacro with-io ((var &optional (path *test-db-name*)) &body body)
+  `(kc.db:with-db (,var ,path :reader :writer :create)
      ,@body))
 
 ;;; TODO: Very poor. Need refactoring.
@@ -79,3 +79,16 @@
                (kc.db:size db))
              (with-open-file (s *test-db-name*)
                (file-length s)))))
+
+(5am:test merge
+  (with-io (src1 "src1.kch")
+    (kc.db:clear src1)
+    (kc.db:set src1 "x" "1")
+    (with-io (src2 "src2.kch")
+      (kc.db:clear src2)
+      (kc.db:set src2 "y" "2")
+      (with-io (dest "dest.kch")
+        (kc.db:clear dest)
+        (kc.db:merge dest (list src1 src2) :set)
+        (5am:is (equal "1" (kc.db:get dest "x")))
+        (5am:is (equal "2" (kc.db:get dest "y")))))))

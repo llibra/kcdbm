@@ -11,6 +11,12 @@
   :try-lock
   :no-repair)
 
+(defcenum merge-mode
+  :set
+  :add
+  :replace
+  :append)
+
 (deftype octet ()
   "An octet. An alias of (unsigned-byte 8)."
   '(unsigned-byte 8))

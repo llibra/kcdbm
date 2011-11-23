@@ -193,3 +193,14 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (-1 (error "Can't calculate the size of the database. (~a)"
                (error-message db)))
     (size size)))
+
+(defun merge (db src mode)
+  (let ((src-len (length src))
+        (mode (foreign-enum-value 'merge-mode mode)))
+    (with-foreign-object (src-ary :pointer src-len)
+      (dotimes (n src-len)
+        (setf (mem-aref src-ary :pointer n) (elt src n)))
+      (ematch (kcdbmerge db src-ary src-len mode)
+        (1 t)
+        (0 (error "Can't merge records from the databases. (~a)"
+                  (error-message db)))))))
