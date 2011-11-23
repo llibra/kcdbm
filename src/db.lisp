@@ -120,6 +120,14 @@ KC.EXT:X->FOREIGN-STRING."
 (defun seize (db key &key (as :string))
   (get db key :as as :remove-p t))
 
+(defun iterate (db full-fn
+                &key (opaque (load-time-value (null-pointer))) (writable t))
+  (let ((writable (convert-to-foreign writable :boolean)))
+    (ematch (kcdbiterate db full-fn opaque writable)
+      (1 t)
+      (0 (error "The iteration for the records in the database failed. (~a)"
+                (error-message db))))))
+
 ;;; For compiler macro expansion of KC.DB.FS:SET.
 (define-compiler-macro set (db key value &rest rest)
   `(with-allocated-foreign-strings

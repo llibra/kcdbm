@@ -36,6 +36,21 @@
       (test (lambda () (kc.db:get db "x" :remove-p t)))
       (test (lambda () (kc.db:seize db "x"))))))
 
+(cffi:defcallback rm :pointer
+    ((kbuf :pointer) (ksiz kc.ffi:size_t) (vbuf :pointer) (vsiz kc.ffi:size_t)
+     (sp :pointer) (opq :pointer))
+  (declare (ignore kbuf ksiz vbuf vsiz sp opq))
+  kc.ffi:+kcvisremove+)
+
+(5am:test iterate
+  (with-io (db)
+    (kc.db:clear db)
+    (kc.db:set db "x" "1")
+    (kc.db:set db "y" "2")
+    (kc.db:set db "z" "3")
+    (kc.db:iterate db (cffi:callback rm))
+    (5am:is (zerop (kc.db:count db)))))
+
 (5am:test append
   (with-io (db)
     (kc.db:set db "x" "+")

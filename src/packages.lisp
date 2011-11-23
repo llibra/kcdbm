@@ -14,6 +14,10 @@
 
            :+kcmset+ :+kcmadd+ :+kcmreplace+ :+kcmappend+
 
+           :+kcvisnop+ :+kcvisremove+
+
+           :+kcversion+
+
            :kcfree :kcecodename))
 
 (defpackage :kyoto-cabinet.ffi.database
@@ -51,6 +55,10 @@
            :+kcoautosync+ :+kconolock+ :+kcotrylock+ :+kconorepair+
 
            :+kcmset+ :+kcmadd+ :+kcmreplace+ :+kcmappend+
+
+           :+kcvisnop+ :+kcvisremove+
+
+           :+kcversion+
 
            :kcfree :kcecodename
 
@@ -105,5 +113,5 @@ convert various data automatically.")
   (:import-from :kc.fs.db :error-message)
   (:import-from :cl-adt :match :ematch)
   (:export :new :delete :open :close :error-message :accept :with-db :get :seize
-           :set :add :replace :append :remove :begin-transaction
+           :iterate :set :add :replace :append :remove :begin-transaction
            :end-transaction :with-transaction :path :clear :count :size :merge))
