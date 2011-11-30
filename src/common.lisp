@@ -42,16 +42,14 @@
 
 (declaim (inline string->foreign-string))
 (defun string->foreign-string (string)
-  (foreign-string-alloc string))
+  (foreign-string-alloc string :null-terminated-p nil))
 
 (defun octets->foreign-string (octets)
-  (let* ((octets-len (length octets))
-         (fs-len (1+ octets-len))
-         (fs (foreign-alloc :uint8 :count fs-len)))
-    (do* ((n 0 (1+ n)))
-         ((= n octets-len))
-      (setf (mem-aref fs :uint8 n) (aref octets n)))
-    (setf (mem-aref fs :uint8 octets-len) 0)))
+  (let* ((len (length octets))
+         (fs (foreign-alloc :uint8 :count len)))
+    (values (dotimes (n len fs)
+              (setf (mem-aref fs :uint8 n) (aref octets n)))
+            len)))
 
 (defun x->foreign-string (x)
   (typecase x
@@ -63,8 +61,8 @@
      (kc.ext:x->foreign-string x))))
 
 (declaim (inline foreign-string->string))
-(defun foreign-string->string (fs)
-  (foreign-string-to-lisp fs))
+(defun foreign-string->string (fs len)
+  (foreign-string-to-lisp fs :count len))
 
 (defun foreign-string->octets (fs len)
   (do* ((octets (make-array len :element-type 'octet))
@@ -76,7 +74,7 @@
 (defun foreign-string->x (type fs len)
   (case type
     (:string
-     (foreign-string->string fs))
+     (foreign-string->string fs len))
     (:octets
      (foreign-string->octets fs len))
     (t

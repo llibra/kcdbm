@@ -119,7 +119,7 @@ It accepts a string and an octet vector as KEY. If you would like to support
 more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
-    (apply #'kc.fs.db:get db key-buf (1- key-len) rest)))
+    (apply #'kc.fs.db:get db key-buf key-len rest)))
 
 (defun seize (db key &key (as :string))
   (get db key :as as :remove-p t))
@@ -129,7 +129,7 @@ KC.EXT:X->FOREIGN-STRING."
   `(with-allocated-foreign-strings
        ((key-buf key-len (x->foreign-string ,key))
         (value-buf value-len (x->foreign-string ,value)))
-     (kc.fs.db:set ,db key-buf (1- key-len) value-buf (1- value-len) ,@rest)))
+     (kc.fs.db:set ,db key-buf key-len value-buf value-len ,@rest)))
 
 (defun set (db key value &rest rest)
   "Sets the value of the record whose key is KEY in the database associated with
@@ -143,8 +143,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   (with-allocated-foreign-strings
       ((key-buf key-len (x->foreign-string key))
        (value-buf value-len (x->foreign-string value)))
-    (apply #'kc.fs.db:set db key-buf (1- key-len) value-buf (1- value-len)
-           rest)))
+    (apply #'kc.fs.db:set db key-buf key-len value-buf value-len rest)))
 
 (defun add (db key value)
   "Corresponds to kcdbadd. A wrapper of SET."
