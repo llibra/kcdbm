@@ -48,7 +48,7 @@
     (kc.db:set db "x" "1")
     (kc.db:set db "y" "2")
     (kc.db:set db "z" "3")
-    (kc.db:iterate db (cffi:callback rm))
+    (kc.fs.db:iterate db (cffi:callback rm))
     (5am:is (zerop (kc.db:count db)))))
 
 (5am:test append
