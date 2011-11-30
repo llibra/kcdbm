@@ -110,10 +110,6 @@ succeed, or NIL otherwise."
                          (close ,db)))
        (delete ,db))))
 
-(defun accept (db key full-fn empty-fn &rest rest)
-  (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
-    (apply #'kc.fs.db:accept db key-buf (1- key-len) full-fn empty-fn rest)))
-
 (defun get (db key &rest rest)
   "Finds the record whose key is KEY in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
