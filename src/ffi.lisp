@@ -1,7 +1,7 @@
 (in-package :kc.ffi.common)
 
 (define-foreign-library libkyotocabinet
-  (:unix "libkyotocabinet.so"))
+  (:unix "libkyotocabinet.so.15"))
 
 (use-foreign-library libkyotocabinet)
 

@@ -1,4 +1,4 @@
-(in-package :kc.fs.db)
+(in-package :kc.db.low)
 
 (defun error-message (db)
   (foreign-string-to-lisp (kcdbemsg db)))
@@ -32,9 +32,8 @@ otherwise."
       (if (null-pointer-p value-ptr)
           (error "Can't get the value associated with the key. (~a)"
                  (error-message db))
-          (unwind-protect
-               (foreign-string->x as value-ptr (mem-ref value-len 'size_t))
-            (kcfree value-ptr))))))
+          (with-kcmalloced-pointer (value-ptr value-ptr)
+            (foreign-string->x as value-ptr (mem-ref value-len 'size_t)))))))
 
 (define-compiler-macro set
     (&whole form db key-buf key-len value-buf value-len &key (method :set)
@@ -82,9 +81,8 @@ released with DELETE when it's no longer in use."
 
 (defun path (db)
   "Returns the path of the database object DB."
-  (let ((path-ptr (kcdbpath db)))
-    (unwind-protect (foreign-string-to-lisp path-ptr)
-      (kcfree path-ptr))))
+  (with-kcmalloced-pointer (path-ptr (kcdbpath db))
+    (foreign-string-to-lisp path-ptr)))
 
 (defun open (db path &rest mode)
   "Opens the database file specified by PATH and associates it with the database
@@ -119,7 +117,7 @@ It accepts a string and an octet vector as KEY. If you would like to support
 more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
-    (apply #'kc.fs.db:get db key-buf key-len rest)))
+    (apply #'kc.db.low:get db key-buf key-len rest)))
 
 (defun seize (db key &key (as :string))
   (get db key :as as :remove-p t))
@@ -129,7 +127,7 @@ KC.EXT:X->FOREIGN-STRING."
   `(with-allocated-foreign-strings
        ((key-buf key-len (x->foreign-string ,key))
         (value-buf value-len (x->foreign-string ,value)))
-     (kc.fs.db:set ,db key-buf key-len value-buf value-len ,@rest)))
+     (kc.db.low:set ,db key-buf key-len value-buf value-len ,@rest)))
 
 (defun set (db key value &rest rest)
   "Sets the value of the record whose key is KEY in the database associated with
@@ -143,7 +141,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   (with-allocated-foreign-strings
       ((key-buf key-len (x->foreign-string key))
        (value-buf value-len (x->foreign-string value)))
-    (apply #'kc.fs.db:set db key-buf key-len value-buf value-len rest)))
+    (apply #'kc.db.low:set db key-buf key-len value-buf value-len rest)))
 
 (defun add (db key value)
   "Corresponds to kcdbadd. A wrapper of SET."
@@ -159,7 +157,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
 
 (defun remove (db key)
   (with-foreign-string ((key-buf key-len) key :null-terminated-p nil)
-    (kc.fs.db:remove db key-buf key-len)))
+    (kc.db.low:remove db key-buf key-len)))
 
 (defun begin-transaction (db &key (blocking-p t) physical-p)
   (if (zerop (funcall (if blocking-p #'kcdbbegintran #'kcdbbegintrantry)

@@ -86,14 +86,15 @@ layer. Types, utilities, etc..")
            :octet :octets :simple-octets
 
            :with-allocated-foreign-string :with-allocated-foreign-strings
+           :with-kcmalloced-pointer
 
            :string->foreign-string :octets->foreign-string :x->foreign-string
            :foreign-string->string :foreign-string->octets :foreign-string->x
 
            :set-method->ffi-symbol))
 
-(defpackage :kyoto-cabinet.foreign-string.database
-  (:nicknames :kc.fs.db)
+(defpackage :kyoto-cabinet.database.low-level
+  (:nicknames :kc.db.low)
   (:documentation "Contains low-level database APIs. The APIs in this package
 directly accept a foreign string of CFFI. They exist for speed.")
   (:use :cl :cffi :kc.ffi :kc.common)

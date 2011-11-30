@@ -40,6 +40,11 @@
            (with-allocated-foreign-strings ,rest ,@body))
         `(with-allocated-foreign-string ,binding ,@body))))
 
+(defmacro with-kcmalloced-pointer ((var form) &body body)
+  `(let ((,var ,form))
+     (unwind-protect (progn ,@body)
+       (kcfree ,var))))
+
 (declaim (inline string->foreign-string))
 (defun string->foreign-string (string)
   (foreign-string-alloc string :null-terminated-p nil))
