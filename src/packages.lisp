@@ -111,7 +111,7 @@ convert various data automatically.")
   (:shadow :append :close :count :delete :get :merge :open :remove :replace
            :set)
   (:import-from :alexandria :with-gensyms :once-only)
-  (:import-from :kc.fs.db :error-message)
+  (:import-from :kc.db.low :error-message)
   (:import-from :cl-adt :match :ematch)
   (:export :new :delete :open :close :error-message :with-db :get :seize
            :set :add :replace :append :remove :begin-transaction
