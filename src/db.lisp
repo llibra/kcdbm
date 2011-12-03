@@ -67,6 +67,15 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (1 t)
     (0 (error "Can't remove the record. (~a)" (error-message db)))))
 
+(defun synchronize (db &key (post-proc (load-time-value (null-pointer)))
+                            (physical-p nil)
+                            (opaque (load-time-value (null-pointer))))
+  (let ((physical-p (convert-to-foreign physical-p :boolean)))
+    (if (zerop (kcdbsync db physical-p post-proc opaque))
+        (error "The synchronization of the database failed. (~a)"
+               (error-message db))
+        t)))
+
 (defun occupy (db fn &key (opaque (load-time-value (null-pointer)))
                           (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
