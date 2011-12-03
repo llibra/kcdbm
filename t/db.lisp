@@ -107,3 +107,15 @@
         (kc.db:merge dest (list src1 src2) :set)
         (5am:is (equal "1" (kc.db:get dest "x")))
         (5am:is (equal "2" (kc.db:get dest "y")))))))
+
+(5am:test copy
+  (with-io (src "src.kch")
+    (kc.db:clear src)
+    (kc.db:set src "x" "1")
+    (kc.db:set src "y" "2")
+    (kc.db:copy src "dest.kch")
+    (with-io (dest "dest.kch")
+      (5am:is (equal "1" (kc.db:get dest "x")))
+      (5am:is (equal "2" (kc.db:get dest "y")))
+      (5am:signals error (kc.db:get dest "z"))
+      (5am:is (= 2 (kc.db:count dest))))))

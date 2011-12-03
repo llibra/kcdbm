@@ -114,5 +114,5 @@ convert various data automatically.")
   (:import-from :kc.db.low :error-message)
   (:import-from :cl-adt :match :ematch)
   (:export :new :delete :open :close :error-message :with-db :get :seize
-           :set :add :replace :append :remove :begin-transaction
+           :set :add :replace :append :remove :copy :begin-transaction
            :end-transaction :with-transaction :path :clear :count :size :merge))

@@ -205,3 +205,9 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
         (1 t)
         (0 (error "Can't merge records from the databases. (~a)"
                   (error-message db)))))))
+
+(defun copy (db dest)
+  (with-foreign-string (dest-fs dest)
+    (if (zerop (kcdbcopy db dest-fs))
+        (error "Can't copy the database. (~a)" (error-message db))
+        t)))
