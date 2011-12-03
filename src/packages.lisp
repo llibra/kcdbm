@@ -93,7 +93,7 @@ layer. Types, utilities, etc..")
 
            :set-method->ffi-symbol
 
-           :aif/ptr))
+           :aif/ptr :it))
 
 (defpackage :kyoto-cabinet.database.low-level
   (:nicknames :kc.db.low)
