@@ -211,3 +211,11 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (if (zerop (kcdbcopy db dest-fs))
         (error "Can't copy the database. (~a)" (error-message db))
         t)))
+
+(defun status (db)
+  (aif/ptr (kcdbstatus db)
+           (with-kcmalloced-pointer (ptr it)
+             (mapcar (lambda (line) (apply #'cons (split "\\t" line)))
+                     (split "\\n" (foreign-string-to-lisp ptr))))
+           (error "Can't retrieve the miscellaneous status information. (~a)"
+                  (error-message db))))

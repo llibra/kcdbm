@@ -91,7 +91,9 @@ layer. Types, utilities, etc..")
            :string->foreign-string :octets->foreign-string :x->foreign-string
            :foreign-string->string :foreign-string->octets :foreign-string->x
 
-           :set-method->ffi-symbol))
+           :set-method->ffi-symbol
+
+           :aif/ptr))
 
 (defpackage :kyoto-cabinet.database.low-level
   (:nicknames :kc.db.low)
@@ -111,8 +113,10 @@ convert various data automatically.")
   (:shadow :append :close :count :delete :get :merge :open :remove :replace
            :set)
   (:import-from :alexandria :with-gensyms :once-only)
+  (:import-from :ppcre :split)
   (:import-from :kc.db.low :error-message)
   (:import-from :cl-adt :match :ematch)
-  (:export :new :delete :open :close :error-message :with-db :get :seize
-           :set :add :replace :append :remove :copy :begin-transaction
-           :end-transaction :with-transaction :path :clear :count :size :merge))
+  (:export :new :delete :open :close :error-message :with-db :get :seize :set
+           :add :replace :append :remove :copy :begin-transaction
+           :end-transaction :with-transaction :path :clear :count :size :status
+           :merge))

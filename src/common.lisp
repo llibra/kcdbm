@@ -87,3 +87,7 @@
 
 (defun set-method->ffi-symbol (method)
   (find-symbol (format nil "KCDB~a" method) :kc.ffi))
+
+(defmacro aif/ptr (test then &optional else)
+  `(let ((it ,test))
+     (if (null-pointer-p it) ,else ,then)))
