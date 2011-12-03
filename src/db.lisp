@@ -26,14 +26,13 @@ KEY-BUF is a CFFI's foreign string and KEY-LEN is the length of KEY-BUF.
 
 If STRING-P is true, returns the value as a Lisp string. Returns as a vector
 otherwise."
-  (with-foreign-object (value-len 'size_t)
-    (let ((value-ptr (funcall (if remove-p #'kcdbseize #'kcdbget) db key-buf
-                              key-len value-len)))
-      (if (null-pointer-p value-ptr)
-          (error "Can't get the value associated with the key. (~a)"
-                 (error-message db))
-          (with-kcmalloced-pointer (value-ptr value-ptr)
-            (foreign-string->x as value-ptr (mem-ref value-len 'size_t)))))))
+  (let ((fn (if remove-p #'kcdbseize #'kcdbget)))
+    (with-foreign-object (value-len 'size_t)
+      (aif/ptr (funcall fn db key-buf key-len value-len)
+               (with-kcmalloced-pointer (value-ptr it)
+                 (foreign-string->x as value-ptr (mem-ref value-len 'size_t)))
+               (error "Can't get the value associated with the key. (~a)"
+                      (error-message db))))))
 
 (define-compiler-macro set
     (&whole form db key-buf key-len value-buf value-len &key (method :set)
