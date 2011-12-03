@@ -67,6 +67,14 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (1 t)
     (0 (error "Can't remove the record. (~a)" (error-message db)))))
 
+(defun occupy (db fn &key (opaque (load-time-value (null-pointer)))
+                          (writable t))
+  (let ((writable (convert-to-foreign writable :boolean)))
+    (if (zerop (kcdboccupy db writable fn opaque))
+        (error "The atomic and exclusive operation to the database failed. (~a)"
+               (error-message db))
+        t)))
+
 (in-package :kc.db)
 
 (defun new ()
