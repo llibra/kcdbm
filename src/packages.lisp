@@ -93,7 +93,9 @@ layer. Types, utilities, etc..")
 
            :set-method->ffi-symbol
 
-           :aif/ptr :it))
+           :aif/ptr :it
+
+           :*null-pointer*))
 
 (defpackage :kyoto-cabinet.database.low-level
   (:nicknames :kc.db.low)
@@ -103,8 +105,8 @@ directly accept a foreign string of CFFI. They exist for speed.")
   (:shadow :get :remove :set)
   (:import-from :alexandria :once-only)
   (:import-from :cl-adt :ematch)
-  (:export :error-message :accept :iterate :get :set :remove :synchronize
-           :occupy))
+  (:export :error-message :accept :iterate :scan-parallel :get :set :remove
+           :synchronize :occupy))
 
 (defpackage :kyoto-cabinet.database
   (:nicknames :kc.db)

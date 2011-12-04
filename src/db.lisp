@@ -3,21 +3,26 @@
 (defun error-message (db)
   (foreign-string-to-lisp (kcdbemsg db)))
 
-(defun accept (db key-buf key-len full-fn empty-fn
-               &key (opaque (load-time-value (null-pointer))) (writable t))
+(defun accept (db key-buf key-len full-fn empty-fn &key (opaque *null-pointer*)
+                                                        (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdbaccept db key-buf key-len full-fn empty-fn opaque writable))
         (error "Can't accept the visitor functions. (~a)"
                (error-message db))
         t)))
 
-(defun iterate (db full-fn
-                &key (opaque (load-time-value (null-pointer))) (writable t))
+(defun iterate (db full-fn &key (opaque *null-pointer*) (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (ematch (kcdbiterate db full-fn opaque writable)
       (1 t)
       (0 (error "The iteration for the records in the database failed. (~a)"
                 (error-message db))))))
+
+(defun scan-parallel (db visitor n &key (opaque *null-pointer*))
+  (if (zerop (kcdbscanpara db visitor opaque n))
+      (error "The parallel scanning for the database failed. (~a)"
+             (error-message db))
+      t))
 
 (defun get (db key-buf key-len &key (as :string) remove-p)
   "Finds the record whose key is KEY-BUF in the database associated with DB and
@@ -67,17 +72,16 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (1 t)
     (0 (error "Can't remove the record. (~a)" (error-message db)))))
 
-(defun synchronize (db &key (post-proc (load-time-value (null-pointer)))
+(defun synchronize (db &key (post-proc *null-pointer*)
                             (physical-p nil)
-                            (opaque (load-time-value (null-pointer))))
+                            (opaque *null-pointer*))
   (let ((physical-p (convert-to-foreign physical-p :boolean)))
     (if (zerop (kcdbsync db physical-p post-proc opaque))
         (error "The synchronization of the database failed. (~a)"
                (error-message db))
         t)))
 
-(defun occupy (db fn &key (opaque (load-time-value (null-pointer)))
-                          (writable t))
+(defun occupy (db fn &key (opaque *null-pointer*) (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdboccupy db writable fn opaque))
         (error "The atomic and exclusive operation to the database failed. (~a)"

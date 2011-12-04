@@ -91,3 +91,5 @@
 (defmacro aif/ptr (test then &optional else)
   `(let ((it ,test))
      (if (null-pointer-p it) ,else ,then)))
+
+(defvar *null-pointer* (null-pointer))
