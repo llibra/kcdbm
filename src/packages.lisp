@@ -81,7 +81,7 @@
   (:documentation "Contains common parts of the whole of KCDBM except the FFI
 layer. Types, utilities, etc..")
   (:use :cl :cffi :kc.ffi)
-  (:export :open-mode :merge-mode
+  (:export :error-code :open-mode :merge-mode
 
            :octet :octets :simple-octets
 
@@ -119,7 +119,7 @@ convert various data automatically.")
   (:import-from :ppcre :split)
   (:import-from :kc.db.low :error-message)
   (:import-from :cl-adt :match :ematch)
-  (:export :new :delete :open :close :error-message :with-db :get :seize :set
-           :add :replace :append :remove :copy :begin-transaction
+  (:export :new :delete :open :close :error-message :error-code :with-db :get
+           :seize :set :add :replace :append :remove :copy :begin-transaction
            :end-transaction :with-transaction :path :clear :count :size :status
            :merge))

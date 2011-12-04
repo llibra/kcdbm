@@ -1,5 +1,18 @@
 (in-package :kc.common)
 
+(defcenum error-code
+  :success
+  :not-implemented
+  :invalid-operation
+  :no-repository
+  :no-permission
+  :broken-file
+  :record-duplication
+  :no-record
+  :logical-inconsistency
+  :system-error
+  (:miscellaneous-error 15))
+
 (defbitfield open-mode
   (:reader 1)
   :writer

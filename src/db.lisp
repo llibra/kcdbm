@@ -128,6 +128,9 @@ succeed, or NIL otherwise."
                          (close ,db)))
        (delete ,db))))
 
+(defun error-code (db)
+  (foreign-enum-keyword 'error-code (kcdbecode db)))
+
 (defun get (db key &rest rest)
   "Finds the record whose key is KEY in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
