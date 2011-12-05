@@ -67,6 +67,25 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
              (error-message db))
       t))
 
+(defun increment (db key-buf key-len n &key (origin 0))
+  (let ((new (kcdbincrint db key-buf key-len n origin)))
+    (if (= new +int64-min+)
+        (error "Can't increment the value of the record. (~a)"
+               (error-message db))
+        new)))
+
+(defun increment-double (db key-buf key-len n &key (origin 0.0d0))
+  (let ((new (kcdbincrdouble db key-buf key-len n origin)))
+    (flet ((err ()
+             (error "Can't increment the value of the record. (~a)"
+                    (error-message db))))
+      ;; check whether the returned value is NaN
+      (handler-case (if (= new new) new (err))
+        ;; if a floating point trap occurs
+        (floating-point-invalid-operation (c)
+          (declare (ignore c))
+          (err))))))
+
 (defun remove (db key-buf key-len)
   (ematch (kcdbremove db key-buf key-len)
     (1 t)
@@ -177,6 +196,14 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
 (defun append (db key value)
   "Corresponds to kcdbappend. A wrapper of SET."
   (set db key value :method :append))
+
+(defun increment (db key n &key origin)
+  (let ((fn (if (integerp n)
+                #'kc.db.low:increment
+                #'kc.db.low:increment-double))
+        (origin (if origin origin (if (integerp n) 0 0.0d0))))
+    (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
+      (funcall fn db key-buf key-len n :origin origin))))
 
 (defun remove (db key)
   (with-foreign-string ((key-buf key-len) key :null-terminated-p nil)

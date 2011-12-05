@@ -59,6 +59,16 @@
     (kc.db:append db "x" "+")
     (5am:is (equal "+++" (kc.db:get db "x")))))
 
+(5am:test increment
+  (with-io (db)
+    (kc.db:clear db)
+    (5am:is (= 1 (kc.db:increment db "i" 1)))
+    (5am:is (= 2 (kc.db:increment db "i" 1)))
+    (5am:is (= 4 (kc.db:increment db "i" 2)))
+    (5am:is (= 0.5d0 (kc.db:increment db "f" 0.5d0)))
+    (5am:is (= 1.0d0 (kc.db:increment db "f" 0.5d0)))
+    (5am:is (= 2.5d0 (kc.db:increment db "f" 1.5d0)))))
+
 (5am:test remove
   (with-io (db)
     (kc.db:clear db)

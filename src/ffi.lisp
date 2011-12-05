@@ -34,6 +34,11 @@
   (key kcstr)
   (value kcstr))
 
+(defconstant +int64-min+
+  #.(- (expt 2 (1- 64)))
+  "The minimum of 64-bit signed integer. This is the same as INT64_MIN defined
+in stdint.h.")
+
 ;;; Error Codes
 (defconstant +kcesuccess+   0)
 (defconstant +kcenoimpl+    1)
