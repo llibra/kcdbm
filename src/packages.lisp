@@ -110,7 +110,7 @@ directly accept a foreign string of CFFI. They exist for speed.")
   (:import-from :alexandria :once-only)
   (:import-from :cl-adt :ematch)
   (:export :error-message :accept :iterate :scan-parallel :get :set :increment
-           :increment-double :remove :synchronize :occupy))
+           :increment-double :cas :remove :synchronize :occupy))
 
 (defpackage :kyoto-cabinet.database
   (:nicknames :kc.db)
@@ -124,6 +124,6 @@ convert various data automatically.")
   (:import-from :kc.db.low :error-message)
   (:import-from :cl-adt :match :ematch)
   (:export :new :delete :open :close :error-message :error-code :with-db :get
-           :seize :set :add :replace :append :increment :remove :copy
+           :seize :set :add :replace :append :increment :cas :remove :copy
            :begin-transaction :end-transaction :with-transaction :path :clear
            :count :size :status :merge))

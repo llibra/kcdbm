@@ -69,6 +69,13 @@
     (5am:is (= 1.0d0 (kc.db:increment db "f" 0.5d0)))
     (5am:is (= 2.5d0 (kc.db:increment db "f" 1.5d0)))))
 
+(5am:test cas
+  (with-io (db)
+    (kc.db:clear db)
+    (kc.db:set db "x" "old")
+    (kc.db:cas db "x" "old" "new")
+    (5am:is (equal "new" (kc.db:get db "x")))))
+
 (5am:test remove
   (with-io (db)
     (kc.db:clear db)

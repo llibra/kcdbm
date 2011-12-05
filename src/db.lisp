@@ -86,6 +86,11 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
           (declare (ignore c))
           (err))))))
 
+(defun cas (db key-fs key-len old-fs old-len new-fs new-len)
+  (if (zerop (kcdbcas db key-fs key-len old-fs old-len new-fs new-len))
+      (error "Can't perform compare-and-swap. (~a)" (error-message db))
+      t))
+
 (defun remove (db key-buf key-len)
   (ematch (kcdbremove db key-buf key-len)
     (1 t)
@@ -204,6 +209,12 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
         (origin (if origin origin (if (integerp n) 0 0.0d0))))
     (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
       (funcall fn db key-buf key-len n :origin origin))))
+
+(defun cas (db key old new)
+  (with-allocated-foreign-strings ((key-fs key-len (x->foreign-string key))
+                                   (old-fs old-len (x->foreign-string old))
+                                   (new-fs new-len (x->foreign-string new)))
+    (kc.db.low:cas db key-fs key-len old-fs old-len new-fs new-len)))
 
 (defun remove (db key)
   (with-foreign-string ((key-buf key-len) key :null-terminated-p nil)
