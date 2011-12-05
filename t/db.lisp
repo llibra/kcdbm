@@ -97,6 +97,20 @@
     (5am:signals error (kc.db:get db "y"))
     (5am:is (zerop (kc.db:count db)))))
 
+(5am:test snapshot
+  (let ((dest "test.kcss"))
+    (with-io (db)
+      (kc.db:clear db)
+      (kc.db:set db "x" "1")
+      (kc.db:set db "y" "2")
+      (kc.db:dump-snapshot db dest)
+      (let ((count (kc.db:count db)))
+        (kc.db:clear db)
+        (kc.db:load-snapshot db dest)
+        (5am:is (equal "1" (kc.db:get db "x")))
+        (5am:is (equal "2" (kc.db:get db "y")))
+        (5am:is (= count (kc.db:count db)))))))
+
 (5am:test count
   (with-io (db)
     (kc.db:clear db)

@@ -126,4 +126,4 @@ convert various data automatically.")
   (:export :new :delete :open :close :error-message :error-code :with-db :get
            :seize :set :add :replace :append :increment :cas :remove :copy
            :begin-transaction :end-transaction :with-transaction :path :clear
-           :count :size :status :merge))
+           :dump-snapshot :load-snapshot :count :size :status :merge))

@@ -244,6 +244,19 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (1 t)
     (0 (error "Can't clear the database. (~a)" (error-message db)))))
 
+(defun dump-snapshot (db dest)
+  (with-foreign-string (dest-fs dest)
+    (if (zerop (kcdbdumpsnap db dest-fs))
+        (error "Can't dump the records of the database into the file. (~a)"
+               (error-message db))
+        t)))
+
+(defun load-snapshot (db src)
+  (with-foreign-string (src-fs src)
+    (if (zerop (kcdbloadsnap db src-fs))
+        (error "Can't load records from snapshot. (~a)" (error-message db))
+        t)))
+
 (defun count (db)
   (match (kcdbcount db)
     (-1 (error "Can't count the records in the database. (~a)"
