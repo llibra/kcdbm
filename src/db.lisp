@@ -81,7 +81,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
                (error-message db))
         new)))
 
-(defun increment-double (db key-buf key-len n &key (origin 0.0d0))
+(defun increment/double (db key-buf key-len n &key (origin 0.0d0))
   (let ((new (kcdbincrdouble db key-buf key-len n origin)))
     (flet ((err ()
              (error "Can't increment the value of the record. (~a)"
@@ -212,7 +212,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
 (defun increment (db key n &key origin)
   (let ((fn (if (integerp n)
                 #'kc.db.low:increment
-                #'kc.db.low:increment-double))
+                #'kc.db.low:increment/double))
         (origin (if origin origin (if (integerp n) 0 0.0d0))))
     (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
       (funcall fn db key-buf key-len n :origin origin))))
