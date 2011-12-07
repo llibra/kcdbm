@@ -1,11 +1,14 @@
 (in-package :cl-user)
 
-(defpackage :kyoto-cabinet.ffi.common
-  (:nicknames :kc.ffi.common)
+(defpackage :kyoto-cabinet.ffi.types
+  (:nicknames :kc.ffi.type)
   (:use :cl :cffi)
-  (:export :size_t :kcvisitfull :kcvisitempty :kcfileproc :kcdb :kcstr :kcrec
+  (:export :size_t :kcvisitfull :kcvisitempty :kcfileproc :kcdb :kcstr :kcrec))
 
-           :+int64-min+
+(defpackage :kyoto-cabinet.ffi.variables
+  (:nicknames :kc.ffi.var)
+  (:use :cl :cffi)
+  (:export :+int64-min+
 
            :+kcesuccess+ :+kcenoimpl+ :+kceinvalid+ :+kcenorepos+ :+kcenoperm+
            :+kcebroken+ :+kceduprec+ :+kcenorec+ :+kcelogic+ :+kcesystem+
@@ -18,13 +21,16 @@
 
            :+kcvisnop+ :+kcvisremove+
 
-           :+kcversion+
+           :+kcversion+))
 
-           :kcfree :kcecodename))
+(defpackage :kyoto-cabinet.ffi.common
+  (:nicknames :kc.ffi.common)
+  (:use :cl :cffi)
+  (:export :kcfree :kcecodename))
 
 (defpackage :kyoto-cabinet.ffi.database
   (:nicknames :kc.ffi.db)
-  (:use :cl :cffi :kc.ffi.common)
+  (:use :cl :cffi :kc.ffi.type)
   (:export :kcdbnew :kcdbdel :kcdbopen :kcdbclose :kcdbecode :kcdbemsg
            :kcdbaccept :kcdbacceptbulk :kcdbiterate :kcdbscanpara :kcdbset
            :kcdbadd :kcdbreplace :kcdbappend :kcdbincrint :kcdbincrdouble
@@ -36,17 +42,18 @@
 
 (defpackage :kyoto-cabinet.ffi.cursor
   (:nicknames :kc.ffi.cur)
-  (:use :cl :cffi :kc.ffi.common)
+  (:use :cl :cffi :kc.ffi.type)
   )
 
 (defpackage :kyoto-cabinet.ffi.index-database
   (:nicknames :kc.ffi.idx)
-  (:use :cl :cffi :kc.ffi.common)
+  (:use :cl :cffi :kc.ffi.type)
   )
 
 (defpackage :kyoto-cabinet.ffi
   (:nicknames :kc.ffi)
-  (:use :cl :cffi :kc.ffi.common :kc.ffi.db :kc.ffi.cur :kc.ffi.idx)
+  (:use :kc.ffi.type :kc.ffi.var :kc.ffi.common :kc.ffi.db :kc.ffi.cur
+        :kc.ffi.idx)
   (:export :size_t :kcvisitfull :kcvisitempty :kcfileproc :kcdb :kcstr :kcrec
 
            :+int64-min+
