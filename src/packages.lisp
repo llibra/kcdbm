@@ -109,8 +109,8 @@ directly accept a foreign string of CFFI. They exist for speed.")
   (:shadow :get :remove :set)
   (:import-from :alexandria :once-only)
   (:import-from :cl-adt :ematch)
-  (:export :error-message :accept :iterate :scan-parallel :get :set :increment
-           :increment-double :cas :remove :synchronize :occupy))
+  (:export :error-message :accept :iterate :scan-parallel :get :get/buffer :set
+           :increment :increment-double :cas :remove :synchronize :occupy))
 
 (defpackage :kyoto-cabinet.database
   (:nicknames :kc.db)

@@ -39,6 +39,13 @@ otherwise."
                (error "Can't get the value associated with the key. (~a)"
                       (error-message db))))))
 
+(defun get/buffer (db key-buf key-len value-buf value-len)
+  (let ((len (kcdbgetbuf db key-buf key-len value-buf value-len)))
+    (if (= len -1)
+        (error "Can't get the value associated with the key. (~a)"
+               (error-message db))
+        len)))
+
 (define-compiler-macro set
     (&whole form db key-buf key-len value-buf value-len &key (method :set)
      &environment env)
