@@ -194,10 +194,10 @@ in stdint.h.")
   (db (:pointer kcdb))
   (kbuf (:pointer :char))
   (ksiz size_t)
-  (nvbuf (:pointer :char))
-  (nvsiz size_t)
   (ovbuf (:pointer :char))
-  (ovsiz size_t))
+  (ovsiz size_t)
+  (nvbuf (:pointer :char))
+  (nvsiz size_t))
 
 (defcfun "kcdbremove" :int32
   "Remove a record."
