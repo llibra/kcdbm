@@ -12,7 +12,10 @@
                         :components ((:file "packages")
                                      (:file "ffi")
                                      (:file "ext")
-                                     (:file "common")
+                                     (:file "type")
+                                     (:file "var")
+                                     (:file "conv")
+                                     (:file "util")
                                      (:file "db")))))
 
 (defsystem :kcdbm-test

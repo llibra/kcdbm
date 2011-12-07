@@ -5,6 +5,8 @@
 
 (use-foreign-library libkyotocabinet)
 
+(in-package :kc.ffi.type)
+
 ;;; It's klugy and not a right way to assume that the size of size_t equals
 ;;; the pointer's one. But it's an easy way and mostly correct.
 (defctype size_t
@@ -33,6 +35,8 @@
   "Key-Value record."
   (key kcstr)
   (value kcstr))
+
+(in-package :kc.ffi.var)
 
 (defconstant +int64-min+
   #.(- (expt 2 (1- 64)))
@@ -71,6 +75,8 @@ in stdint.h.")
 
 (defcvar ("KCVISREMOVE" +kcvisremove+) (:pointer :char)
   "Special pointer to remove the record by the visiting function.")
+
+(in-package :kc.ffi.common)
 
 (defcfun "kcfree" :void
   "Release a region allocated in the library."
