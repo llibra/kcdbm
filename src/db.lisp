@@ -18,7 +18,7 @@
       (0 (error "The iteration for the records in the database failed. (~a)"
                 (error-message db))))))
 
-(defun scan-parallel (db visitor n &key (opaque *null-pointer*))
+(defun scan-in-parallel (db visitor n &key (opaque *null-pointer*))
   (if (zerop (kcdbscanpara db visitor opaque n))
       (error "The parallel scanning for the database failed. (~a)"
              (error-message db))
