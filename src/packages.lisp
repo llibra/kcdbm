@@ -80,7 +80,7 @@
   (:use :cl)
   (:export :x->foreign-string :foreign-string->x))
 
-(defpackage :kyoto-cabinet.type
+(defpackage :kyoto-cabinet.types
   (:nicknames :kc.type)
   (:use :cl :cffi)
   (:export ;; Lisp types
