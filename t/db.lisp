@@ -33,7 +33,7 @@
              (kc.db:set db "x" "1")
              (5am:finishes (funcall fn))
              (5am:signals error (kc.db:get db "x"))))
-      (test (lambda () (kc.db:get db "x" :remove-p t)))
+      (test (lambda () (kc.db:get db "x" :remove t)))
       (test (lambda () (kc.db:seize db "x"))))))
 
 (cffi:defcallback rm :pointer

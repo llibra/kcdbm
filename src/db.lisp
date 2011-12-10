@@ -114,15 +114,15 @@ If succeeds to set a value, T is returned. Otherwise, an error occurs."
     (1 t)
     (0 (error "Can't remove the record. (~a)" (error-message db)))))
 
-(defun get (db key-buf key-len &key remove-p)
+(defun get (db key-buf key-len &key remove)
   "Finds the record whose key equals KEY-BUF in the database associated with DB
 and returns its value as a C foreign string and the length of it. If there's no
 corresponding record, an error is signaled. KEY-BUF is a CFFI foreign string and
 KEY-LEN is the length of it. The foreign string as the first return value should
 be released with KC.FFI:KCFREE when it's no longer in use.
 
-If REMOVE-P is true, the record is removed at the same time."
-  (let ((fn (if remove-p #'kcdbseize #'kcdbget)))
+If REMOVE is true, the record is removed at the same time."
+  (let ((fn (if remove #'kcdbseize #'kcdbget)))
     (with-foreign-object (value-len 'size_t)
       (aif/ptr (funcall fn db key-buf key-len value-len)
                (values it (mem-ref value-len 'size_t))
@@ -228,20 +228,20 @@ If REMOVE-P is true, the record is removed at the same time."
                          (close ,db)))
        (delete ,db))))
 
-(defun get (db key &key (as :string) remove-p)
+(defun get (db key &key (as :string) remove)
   "Finds the record whose key equals KEY in the database associated with DB and
 returns its value. If there's no corresponding record, an error occurs. The
 return value is converted to an object of the type specified by AS.
 
-If REMOVE-P is true, the record is removed at the same time."
+If REMOVE is true, the record is removed at the same time."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
     (multiple-value-bind (value-ptr value-len)
-        (kc.db.base:get db key-buf key-len :remove-p remove-p)
+        (kc.db.base:get db key-buf key-len :remove remove)
       (with-kcmalloced-pointer (value-ptr value-ptr)
         (foreign-string->x as value-ptr value-len)))))
 
 (defun seize (db key &key (as :string))
-  (get db key :as as :remove-p t))
+  (get db key :as as :remove t))
 
 ;;; For compiler macro expansion of KC.DB.FS:SET.
 (define-compiler-macro set (db key value &rest rest)
