@@ -158,8 +158,8 @@ If REMOVE is true, the record is removed at the same time."
         (error "Can't copy the database. (~a)" (error-message db))
         t)))
 
-(defun begin-transaction (db &key (blocking-p t) physical-p)
-  (if (zerop (funcall (if blocking-p #'kcdbbegintran #'kcdbbegintrantry)
+(defun begin-transaction (db &key (wait t) physical-p)
+  (if (zerop (funcall (if wait #'kcdbbegintran #'kcdbbegintrantry)
                       db (convert-to-foreign physical-p :boolean)))
       (error "Can't begin a transaction. (~a)" (error-message db))
       t))
