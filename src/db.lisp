@@ -57,9 +57,10 @@ succeed and signals an error otherwise."
              (error-message db))
       t))
 
-(define-compiler-macro set
-    (&whole form db key-buf key-len value-buf value-len &key (method :set)
-     &environment env)
+(define-compiler-macro set (&whole form
+                            db key-buf key-len value-buf value-len
+                            &key (method :set)
+                            &environment env)
   (once-only (db)
     (if (constantp method env)
         `(if (zerop (,(set-method->ffi-symbol method)
@@ -104,8 +105,8 @@ If succeeds to set a value, T is returned. Otherwise, an error occurs."
           (declare (ignore c))
           (err))))))
 
-(defun cas (db key-fs key-len old-fs old-len new-fs new-len)
-  (if (zerop (kcdbcas db key-fs key-len old-fs old-len new-fs new-len))
+(defun cas (db key-buf key-len old-buf old-len new-buf new-len)
+  (if (zerop (kcdbcas db key-buf key-len old-buf old-len new-buf new-len))
       (error "Can't perform compare-and-swap. (~a)" (error-message db))
       t))
 
@@ -136,8 +137,8 @@ If REMOVE is true, the record is removed at the same time."
                (error-message db))
         len)))
 
-(defun synchronize (db &key (post-processor *null-pointer*)
-                            hard
+(defun synchronize (db &key hard
+                            (post-processor *null-pointer*)
                             (opaque *null-pointer*))
   (let ((hard (convert-to-foreign hard :boolean)))
     (if (zerop (kcdbsync db hard post-processor opaque))
@@ -145,7 +146,7 @@ If REMOVE is true, the record is removed at the same time."
                (error-message db))
         t)))
 
-(defun occupy (db fn &key (opaque *null-pointer*) (writable t))
+(defun occupy (db fn &key (writable t) (opaque *null-pointer*))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdboccupy db writable fn opaque))
         (error "The atomic and exclusive operation to the database failed. (~a)"
@@ -153,8 +154,8 @@ If REMOVE is true, the record is removed at the same time."
         t)))
 
 (defun copy (db dest)
-  (with-foreign-string (dest-fs dest)
-    (if (zerop (kcdbcopy db dest-fs))
+  (with-foreign-string (dest-buf dest)
+    (if (zerop (kcdbcopy db dest-buf))
         (error "Can't copy the database. (~a)" (error-message db))
         t)))
 
@@ -175,15 +176,15 @@ If REMOVE is true, the record is removed at the same time."
     (0 (error "Can't clear the database. (~a)" (error-message db)))))
 
 (defun dump-snapshot (db dest)
-  (with-foreign-string (dest-fs dest)
-    (if (zerop (kcdbdumpsnap db dest-fs))
+  (with-foreign-string (dest-buf dest)
+    (if (zerop (kcdbdumpsnap db dest-buf))
         (error "Can't dump the records of the database into the file. (~a)"
                (error-message db))
         t)))
 
 (defun load-snapshot (db src)
-  (with-foreign-string (src-fs src)
-    (if (zerop (kcdbloadsnap db src-fs))
+  (with-foreign-string (src-buf src)
+    (if (zerop (kcdbloadsnap db src-buf))
         (error "Can't load records from snapshot. (~a)" (error-message db))
         t)))
 
@@ -244,13 +245,13 @@ If REMOVE is true, the record is removed at the same time."
   (get db key :as as :remove t))
 
 ;;; For compiler macro expansion of KC.DB.FS:SET.
-(define-compiler-macro set (db key value &rest rest)
+(define-compiler-macro set (db key value &rest args)
   `(with-allocated-foreign-strings
        ((key-buf key-len (x->foreign-string ,key))
         (value-buf value-len (x->foreign-string ,value)))
-     (kc.db.base:set ,db key-buf key-len value-buf value-len ,@rest)))
+     (kc.db.base:set ,db key-buf key-len value-buf value-len ,@args)))
 
-(defun set (db key value &rest rest)
+(defun set (db key value &rest args)
   "Sets the value of the record whose key equals KEY in the database associated
 with DB to VALUE. If succeeds to set the value, T is returned. Otherwise, an
 error is signaled.
@@ -261,7 +262,7 @@ kcdbreplace, or kcdbappend."
   (with-allocated-foreign-strings
       ((key-buf key-len (x->foreign-string key))
        (value-buf value-len (x->foreign-string value)))
-    (apply #'kc.db.base:set db key-buf key-len value-buf value-len rest)))
+    (apply #'kc.db.base:set db key-buf key-len value-buf value-len args)))
 
 (defun add (db key value)
   "Corresponds to kcdbadd. A wrapper of SET."
@@ -282,10 +283,10 @@ kcdbreplace, or kcdbappend."
       (funcall fn db key-buf key-len n :origin origin))))
 
 (defun cas (db key old new)
-  (with-allocated-foreign-strings ((key-fs key-len (x->foreign-string key))
-                                   (old-fs old-len (x->foreign-string old))
-                                   (new-fs new-len (x->foreign-string new)))
-    (kc.db.base:cas db key-fs key-len old-fs old-len new-fs new-len)))
+  (with-allocated-foreign-strings ((key-buf key-len (x->foreign-string key))
+                                   (old-buf old-len (x->foreign-string old))
+                                   (new-buf new-len (x->foreign-string new)))
+    (kc.db.base:cas db key-buf key-len old-buf old-len new-buf new-len)))
 
 (defun remove (db key)
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
