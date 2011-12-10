@@ -13,7 +13,7 @@ released with DELETE when it's no longer in use."
   (foreign-string-to-lisp (kcdbemsg db)))
 
 (defun path (db)
-  "Returns the path of the database object DB."
+  "Returns the associated path of the database object DB."
   (with-kcmalloced-pointer (path-ptr (kcdbpath db))
     (foreign-string-to-lisp path-ptr)))
 
@@ -27,7 +27,7 @@ object DB."
 
 (defun close (db)
   "Closes the database file associated with the database object DB. Returns T if
-succeed, or NIL otherwise."
+succeed and signals an error otherwise."
   (if (zerop (kcdbclose db))
       (error "Can't close the database file ~a. (~a)"
              (path db) (error-message db))
@@ -70,15 +70,15 @@ succeed, or NIL otherwise."
         form)))
 
 (defun set (db key-buf key-len value-buf value-len &key (method :set))
-  "Sets the value of the record whose key is KEY-BUF in the database associated
-with DB to VALUE-BUF. KEY-BUF and VALUE-BUF are CFFI's foreign strings and
-KEY-LEN and VALUE-LEN are the lengths of KEY-BUF and VALUE-BUF. 
+  "Sets the value of the record whose key equals KEY-BUF in the database
+associated with DB to VALUE-BUF. KEY-BUF and VALUE-BUF are CFFI foreign strings
+and KEY-LEN and VALUE-LEN are the lengths of them. 
 
 METHOD is a method to update the value of a record. It should be one of :SET,
-:ADD :REPLACE or :APPEND. Each method corresponds to kcdbset, kcdbadd,
+:ADD, :REPLACE or :APPEND. Each method corresponds to kcdbset, kcdbadd,
 kcdbreplace, or kcdbappend.
 
-If succeeds to set a value, T is returned. Otherwise, NIL is returned."
+If succeeds to set a value, T is returned. Otherwise, an error occurs."
   (if (zerop (funcall (set-method->ffi-symbol method)
                       db key-buf key-len value-buf value-len))
       (error "Can't set the value associated with the key. (~a)"
@@ -115,12 +115,13 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (0 (error "Can't remove the record. (~a)" (error-message db)))))
 
 (defun get (db key-buf key-len &key remove-p)
-  "Finds the record whose key is KEY-BUF in the database associated with DB and
-returns the associated value. If there's no corresponding record, returns NIL.
-KEY-BUF is a CFFI's foreign string and KEY-LEN is the length of KEY-BUF.
+  "Finds the record whose key equals KEY-BUF in the database associated with DB
+and returns its value as a C foreign string and the length of it. If there's no
+corresponding record, an error is signaled. KEY-BUF is a CFFI foreign string and
+KEY-LEN is the length of it. The foreign string as the first return value should
+be released with KC.FFI:KCFREE when it's no longer in use.
 
-If STRING-P is true, returns the value as a Lisp string. Returns as a vector
-otherwise."
+If REMOVE-P is true, the record is removed at the same time."
   (let ((fn (if remove-p #'kcdbseize #'kcdbget)))
     (with-foreign-object (value-len 'size_t)
       (aif/ptr (funcall fn db key-buf key-len value-len)
@@ -228,13 +229,11 @@ otherwise."
        (delete ,db))))
 
 (defun get (db key &key (as :string) remove-p)
-  "Finds the record whose key is KEY in the database associated with DB and
-returns the associated value. If there's no corresponding record, returns NIL.
-This function supports the same keyword arguments as GET/FS.
+  "Finds the record whose key equals KEY in the database associated with DB and
+returns its value. If there's no corresponding record, an error occurs. The
+return value is converted to an object of the type specified by AS.
 
-It accepts a string and an octet vector as KEY. If you would like to support
-more types, it's a convenient way to define a specialized method of
-KC.EXT:X->FOREIGN-STRING."
+If REMOVE-P is true, the record is removed at the same time."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
     (multiple-value-bind (value-ptr value-len)
         (kc.db.base:get db key-buf key-len :remove-p remove-p)
@@ -252,14 +251,13 @@ KC.EXT:X->FOREIGN-STRING."
      (kc.db.base:set ,db key-buf key-len value-buf value-len ,@rest)))
 
 (defun set (db key value &rest rest)
-  "Sets the value of the record whose key is KEY in the database associated with
-DB KEY to VALUE. This function supports the same keyword arguments as SET/FS.
+  "Sets the value of the record whose key equals KEY in the database associated
+with DB to VALUE. If succeeds to set the value, T is returned. Otherwise, an
+error is signaled.
 
-It accepts a string and an octet vector as KEY and VALUE. Like GET, if you would
-like to support more types, it's a convenient way to define a specialized method
-of KC.EXT:X->FOREIGN-STRING.
-
-If succeeds to set a value, T is returned. Otherwise, NIL is returned."
+METHOD is a method to update the value of a record. It should be one of :SET,
+:ADD, :REPLACE or :APPEND. Each method corresponds to kcdbset, kcdbadd,
+kcdbreplace, or kcdbappend."
   (with-allocated-foreign-strings
       ((key-buf key-len (x->foreign-string key))
        (value-buf value-len (x->foreign-string value)))
