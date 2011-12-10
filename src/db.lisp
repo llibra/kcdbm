@@ -114,7 +114,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (1 t)
     (0 (error "Can't remove the record. (~a)" (error-message db)))))
 
-(defun get (db key-buf key-len &key (as :string) remove-p)
+(defun get (db key-buf key-len &key remove-p)
   "Finds the record whose key is KEY-BUF in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
 KEY-BUF is a CFFI's foreign string and KEY-LEN is the length of KEY-BUF.
@@ -124,8 +124,7 @@ otherwise."
   (let ((fn (if remove-p #'kcdbseize #'kcdbget)))
     (with-foreign-object (value-len 'size_t)
       (aif/ptr (funcall fn db key-buf key-len value-len)
-               (with-kcmalloced-pointer (value-ptr it)
-                 (foreign-string->x as value-ptr (mem-ref value-len 'size_t)))
+               (values it (mem-ref value-len 'size_t))
                (error "Can't get the value associated with the key. (~a)"
                       (error-message db))))))
 
@@ -228,7 +227,7 @@ otherwise."
                          (close ,db)))
        (delete ,db))))
 
-(defun get (db key &rest rest)
+(defun get (db key &key (as :string) remove-p)
   "Finds the record whose key is KEY in the database associated with DB and
 returns the associated value. If there's no corresponding record, returns NIL.
 This function supports the same keyword arguments as GET/FS.
@@ -237,7 +236,10 @@ It accepts a string and an octet vector as KEY. If you would like to support
 more types, it's a convenient way to define a specialized method of
 KC.EXT:X->FOREIGN-STRING."
   (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
-    (apply #'kc.db.base:get db key-buf key-len rest)))
+    (multiple-value-bind (value-ptr value-len)
+        (kc.db.base:get db key-buf key-len :remove-p remove-p)
+      (with-kcmalloced-pointer (value-ptr value-ptr)
+        (foreign-string->x as value-ptr value-len)))))
 
 (defun seize (db key &key (as :string))
   (get db key :as as :remove-p t))
