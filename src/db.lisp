@@ -164,8 +164,8 @@ If REMOVE is true, the record is removed at the same time."
       (error "Can't begin a transaction. (~a)" (error-message db))
       t))
 
-(defun end-transaction (db &key (commit-p t))
-  (if (zerop (kcdbendtran db (convert-to-foreign commit-p :boolean)))
+(defun end-transaction (db &key (commit t))
+  (if (zerop (kcdbendtran db (convert-to-foreign commit :boolean)))
       (error "Can't end the current transaction. (~a)" (error-message db))
       t))
 
@@ -292,9 +292,9 @@ kcdbreplace, or kcdbappend."
     (kc.db.base:remove db key-buf key-len)))
 
 (defmacro with-transaction ((db &rest args) &body body)
-  (with-gensyms (commit-p)
+  (with-gensyms (commit)
     (once-only (db)
-      `(let ((,commit-p nil))
+      `(let ((,commit nil))
          (begin-transaction ,db ,@args)
-         (unwind-protect (prog1 (progn ,@body) (setf ,commit-p t))
-           (end-transaction ,db :commit-p ,commit-p))))))
+         (unwind-protect (prog1 (progn ,@body) (setf ,commit t))
+           (end-transaction ,db :commit ,commit))))))
