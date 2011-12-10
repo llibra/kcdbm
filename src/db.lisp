@@ -288,7 +288,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
     (kc.db.base:cas db key-fs key-len old-fs old-len new-fs new-len)))
 
 (defun remove (db key)
-  (with-foreign-string ((key-buf key-len) key :null-terminated-p nil)
+  (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
     (kc.db.base:remove db key-buf key-len)))
 
 (defmacro with-transaction ((db &rest args) &body body)
