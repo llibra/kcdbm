@@ -276,9 +276,7 @@ If succeeds to set a value, T is returned. Otherwise, NIL is returned."
   (set db key value :method :append))
 
 (defun increment (db key n &key origin)
-  (let ((fn (if (integerp n)
-                #'kc.db.base:increment
-                #'kc.db.base:increment/double))
+  (let ((fn (if (integerp n) #'kc.db.base:increment #'increment/double))
         (origin (if origin origin (if (integerp n) 0 0.0d0))))
     (with-allocated-foreign-string (key-buf key-len (x->foreign-string key))
       (funcall fn db key-buf key-len n :origin origin))))
