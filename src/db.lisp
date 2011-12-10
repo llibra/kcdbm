@@ -136,11 +136,11 @@ If REMOVE is true, the record is removed at the same time."
                (error-message db))
         len)))
 
-(defun synchronize (db &key (post-proc *null-pointer*)
+(defun synchronize (db &key (post-processor *null-pointer*)
                             hard
                             (opaque *null-pointer*))
   (let ((hard (convert-to-foreign hard :boolean)))
-    (if (zerop (kcdbsync db hard post-proc opaque))
+    (if (zerop (kcdbsync db hard post-processor opaque))
         (error "The synchronization of the database failed. (~a)"
                (error-message db))
         t)))
