@@ -3,7 +3,8 @@
 (defpackage :kyoto-cabinet.ffi.types
   (:nicknames :kc.ffi.type)
   (:use :cl :cffi)
-  (:export :size_t :kcvisitfull :kcvisitempty :kcfileproc :kcdb :kcstr :kcrec))
+  (:export :size_t :kcvisitfull :kcvisitempty :kcfileproc :kcdb :kccur :kcstr
+           :kcrec))
 
 (defpackage :kyoto-cabinet.ffi.variables
   (:nicknames :kc.ffi.var)
@@ -42,7 +43,10 @@
 (defpackage :kyoto-cabinet.ffi.cursor
   (:nicknames :kc.ffi.cur)
   (:use :cl :cffi :kc.ffi.type)
-  )
+  (:export :kcdbcursor :kccurdel :kccuraccept :kccursetvalue :kccurremove
+           :kccurgetkey :kccurgetvalue :kccurget :kccurseize :kccurjump
+           :kccurjumpkey :kccurjumpback :kccurjumpbackkey :kccurstep
+           :kccurstepback :kccurdb :kccurecode :kccuremsg))
 
 (defpackage :kyoto-cabinet.ffi.index-database
   (:nicknames :kc.ffi.idx)
@@ -54,7 +58,8 @@
   (:use :kc.ffi.type :kc.ffi.var :kc.ffi.common :kc.ffi.db :kc.ffi.cur
         :kc.ffi.idx)
   ;; Types
-  (:export :size_t :kcvisitfull :kcvisitempty :kcfileproc :kcdb :kcstr :kcrec)
+  (:export :size_t :kcvisitfull :kcvisitempty :kcfileproc :kcdb :kccur :kcstr
+           :kcrec)
   ;; Constants
   (:export :+int64-min+)
   ;; Error Codes
@@ -78,7 +83,12 @@
            :kcdbremovebulk :kcdbgetbulk :kcdbsync :kcdboccupy :kcdbcopy
            :kcdbbegintran :kcdbbegintrantry :kcdbendtran :kcdbclear
            :kcdbdumpsnap :kcdbloadsnap :kcdbcount :kcdbsize :kcdbpath
-           :kcdbstatus :kcdbmatchprefix :kcdbmatchregex :kcdbmerge))
+           :kcdbstatus :kcdbmatchprefix :kcdbmatchregex :kcdbmerge)
+  ;; Cursor Functions
+  (:export :kcdbcursor :kccurdel :kccuraccept :kccursetvalue :kccurremove
+           :kccurgetkey :kccurgetvalue :kccurget :kccurseize :kccurjump
+           :kccurjumpkey :kccurjumpback :kccurjumpbackkey :kccurstep
+           :kccurstepback :kccurdb :kccurecode :kccuremsg))
 
 (defpackage :kyoto-cabinet.extension
   (:nicknames :kc.ext)
