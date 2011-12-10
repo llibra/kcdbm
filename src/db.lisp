@@ -137,10 +137,10 @@ If REMOVE is true, the record is removed at the same time."
         len)))
 
 (defun synchronize (db &key (post-proc *null-pointer*)
-                            (physical-p nil)
+                            hard
                             (opaque *null-pointer*))
-  (let ((physical-p (convert-to-foreign physical-p :boolean)))
-    (if (zerop (kcdbsync db physical-p post-proc opaque))
+  (let ((hard (convert-to-foreign hard :boolean)))
+    (if (zerop (kcdbsync db hard post-proc opaque))
         (error "The synchronization of the database failed. (~a)"
                (error-message db))
         t)))
@@ -158,9 +158,9 @@ If REMOVE is true, the record is removed at the same time."
         (error "Can't copy the database. (~a)" (error-message db))
         t)))
 
-(defun begin-transaction (db &key (wait t) physical-p)
+(defun begin-transaction (db &key (wait t) hard)
   (if (zerop (funcall (if wait #'kcdbbegintran #'kcdbbegintrantry)
-                      db (convert-to-foreign physical-p :boolean)))
+                      db (convert-to-foreign hard :boolean)))
       (error "Can't begin a transaction. (~a)" (error-message db))
       t))
 
