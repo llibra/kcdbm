@@ -111,8 +111,7 @@
 (defpackage :kyoto-cabinet.conversion
   (:nicknames :kc.conv)
   (:use :cl :cffi :kc.type)
-  (:export :string->foreign-string :octets->foreign-string :x->foreign-string
-           :foreign-string->string :foreign-string->octets :foreign-string->x))
+  (:export :x->foreign-string :foreign-string->x))
 
 (defpackage :kyoto-cabinet.utilities
   (:nicknames :kc.util)
