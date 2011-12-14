@@ -135,7 +135,7 @@
            :scan-in-parallel :set :increment :increment/double :cas :remove :get
            :get/buffer :synchronize :occupy :copy :begin-transaction
            :end-transaction :clear :dump-snapshot :load-snapshot :count :size
-           :status :merge))
+           :status :merge :cursor))
 
 (defpackage :kyoto-cabinet.database.low-level
   (:nicknames :kc.db.low)
@@ -156,4 +156,16 @@ convert various data automatically.")
   (:export :error :path :new :delete :open :close :with-db :set :add :replace
            :append :increment :cas :remove :get :seize :copy :begin-transaction
            :end-transaction :with-transaction :clear :dump-snapshot
-           :load-snapshot :count :size :status :merge))
+           :load-snapshot :count :size :status :merge :cursor))
+
+(defpackage :kyoto-cabinet.cursor.base
+  (:nicknames :kc.cur.base)
+  (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util)
+  (:shadow :delete)
+  (:export :delete))
+
+(defpackage :kyoto-cabinet.cursor
+  (:nicknames :kc.cur)
+  (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util :kc.cur.base)
+  (:shadowing-import-from :kc.cur.base :delete)
+  (:export :delete))

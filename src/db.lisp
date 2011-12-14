@@ -207,6 +207,9 @@ If REMOVE is true, the record is removed at the same time."
           (error db "Can't merge records from the databases.")
           t))))
 
+(defun cursor (db)
+  (kcdbcursor db))
+
 (in-package :kc.db)
 
 (defmacro with-db ((db filespec &rest args) &body body)

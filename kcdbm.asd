@@ -17,7 +17,8 @@
                                      (:file "conv")
                                      (:file "util")
                                      (:file "err")
-                                     (:file "db")))))
+                                     (:file "db")
+                                     (:file "cur")))))
 
 (defsystem :kcdbm-test
   :depends-on (:kcdbm :fiveam)
@@ -25,4 +26,5 @@
                         :serial t
                         :components ((:file "packages")
                                      (:file "suites")
-                                     (:file "db")))))
+                                     (:file "db")
+                                     (:file "cur")))))
