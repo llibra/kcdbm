@@ -1,5 +1,19 @@
 (in-package :kc.db.base)
 
+(define-condition error (kc.err:error) ())
+
+(defun path (db)
+  "Returns the associated path of the database object DB."
+  (with-kcmalloced-pointer (path-ptr (kcdbpath db))
+    (foreign-string-to-lisp path-ptr)))
+
+(defun error (db control &rest args)
+  (let ((path (path db))
+        (code (foreign-enum-keyword 'error-code (kcdbecode db)))
+        (message (foreign-string-to-lisp (kcdbemsg db))))
+    (cl:error 'error :format-control control :format-arguments args
+              :path path :code code :message message)))
+
 (defun new ()
   "Creates a polymorphic database object and returns it. The object must be
 released with DELETE when it's no longer in use."
@@ -9,52 +23,37 @@ released with DELETE when it's no longer in use."
   "Destroys the database object DB."
   (kcdbdel db))
 
-(defun error-message (db)
-  (foreign-string-to-lisp (kcdbemsg db)))
-
-(defun path (db)
-  "Returns the associated path of the database object DB."
-  (with-kcmalloced-pointer (path-ptr (kcdbpath db))
-    (foreign-string-to-lisp path-ptr)))
-
 (defun open (db path &rest mode)
   "Opens the database file specified by PATH and associates it with the database
 object DB."
   (with-foreign-string (p path)
     (if (zerop (kcdbopen db p (foreign-bitfield-value 'open-mode mode)))
-        (error "Can't open the database file ~a. (~a)" path (error-message db))
+        (error db "Can't open the database file ~a." path)
         t)))
 
 (defun close (db)
   "Closes the database file associated with the database object DB. Returns T if
 succeed and signals an error otherwise."
   (if (zerop (kcdbclose db))
-      (error "Can't close the database file ~a. (~a)"
-             (path db) (error-message db))
+      (error db "Can't close the database file ~a.")
       t))
-
-(defun error-code (db)
-  (foreign-enum-keyword 'error-code (kcdbecode db)))
 
 (defun accept (db key-buf key-len full-fn empty-fn &key (opaque *null-pointer*)
                                                         (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdbaccept db key-buf key-len full-fn empty-fn opaque writable))
-        (error "Can't accept the visitor functions. (~a)"
-               (error-message db))
+        (error db "Can't accept the visitor functions.")
         t)))
 
 (defun iterate (db full-fn &key (opaque *null-pointer*) (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
     (ematch (kcdbiterate db full-fn opaque writable)
       (1 t)
-      (0 (error "The iteration for the records in the database failed. (~a)"
-                (error-message db))))))
+      (0 (error db "The iteration for the records in the database failed.")))))
 
 (defun scan-in-parallel (db visitor n &key (opaque *null-pointer*))
   (if (zerop (kcdbscanpara db visitor opaque n))
-      (error "The parallel scanning for the database failed. (~a)"
-             (error-message db))
+      (error db "The parallel scanning for the database failed.")
       t))
 
 (define-compiler-macro set (&whole form
@@ -65,8 +64,7 @@ succeed and signals an error otherwise."
     (if (constantp method env)
         `(if (zerop (,(set-method->ffi-symbol method)
                       ,db ,key-buf ,key-len ,value-buf ,value-len))
-             (error "Can't set the value associated with the key. (~a)"
-                    (error-message ,db))
+             (error db "Can't set the value associated with the key.")
              t)
         form)))
 
@@ -82,22 +80,19 @@ kcdbreplace, or kcdbappend.
 If succeeds to set a value, T is returned. Otherwise, an error occurs."
   (if (zerop (funcall (set-method->ffi-symbol method)
                       db key-buf key-len value-buf value-len))
-      (error "Can't set the value associated with the key. (~a)"
-             (error-message db))
+      (error db "Can't set the value associated with the key.")
       t))
 
 (defun increment (db key-buf key-len n &key (origin 0))
   (let ((new (kcdbincrint db key-buf key-len n origin)))
     (if (= new +int64-min+)
-        (error "Can't increment the value of the record. (~a)"
-               (error-message db))
+        (error db "Can't increment the value of the record.")
         new)))
 
 (defun increment/double (db key-buf key-len n &key (origin 0.0d0))
   (let ((new (kcdbincrdouble db key-buf key-len n origin)))
     (flet ((err ()
-             (error "Can't increment the value of the record. (~a)"
-                    (error-message db))))
+             (error db "Can't increment the value of the record.")))
       ;; check whether the returned value is NaN
       (handler-case (if (= new new) new (err))
         ;; if a floating point trap occurs
@@ -107,13 +102,13 @@ If succeeds to set a value, T is returned. Otherwise, an error occurs."
 
 (defun cas (db key-buf key-len old-buf old-len new-buf new-len)
   (if (zerop (kcdbcas db key-buf key-len old-buf old-len new-buf new-len))
-      (error "Can't perform compare-and-swap. (~a)" (error-message db))
+      (error db "Can't perform compare-and-swap.")
       t))
 
 (defun remove (db key-buf key-len)
   (ematch (kcdbremove db key-buf key-len)
     (1 t)
-    (0 (error "Can't remove the record. (~a)" (error-message db)))))
+    (0 (error db "Can't remove the record."))))
 
 (defun get (db key-buf key-len &key remove)
   "Finds the record whose key equals KEY-BUF in the database associated with DB
@@ -127,14 +122,12 @@ If REMOVE is true, the record is removed at the same time."
     (with-foreign-object (value-len 'size_t)
       (aif/ptr (funcall fn db key-buf key-len value-len)
                (values it (mem-ref value-len 'size_t))
-               (error "Can't get the value associated with the key. (~a)"
-                      (error-message db))))))
+               (error db "Can't get the value associated with the key.")))))
 
 (defun get/buffer (db key-buf key-len value-buf value-len)
   (let ((len (kcdbgetbuf db key-buf key-len value-buf value-len)))
     (if (= len -1)
-        (error "Can't get the value associated with the key. (~a)"
-               (error-message db))
+        (error db "Can't get the value associated with the key.")
         len)))
 
 (defun synchronize (db &key hard
@@ -142,62 +135,57 @@ If REMOVE is true, the record is removed at the same time."
                             (opaque *null-pointer*))
   (let ((hard (convert-to-foreign hard :boolean)))
     (if (zerop (kcdbsync db hard post-processor opaque))
-        (error "The synchronization of the database failed. (~a)"
-               (error-message db))
+        (error db "The synchronization of the database failed.")
         t)))
 
 (defun occupy (db fn &key (writable t) (opaque *null-pointer*))
   (let ((writable (convert-to-foreign writable :boolean)))
     (if (zerop (kcdboccupy db writable fn opaque))
-        (error "The atomic and exclusive operation to the database failed. (~a)"
-               (error-message db))
+        (error db "The atomic and exclusive operation to the database failed.")
         t)))
 
 (defun copy (db dest)
   (with-foreign-string (dest-buf dest)
     (if (zerop (kcdbcopy db dest-buf))
-        (error "Can't copy the database. (~a)" (error-message db))
+        (error db "Can't copy the database.")
         t)))
 
 (defun begin-transaction (db &key (wait t) hard)
   (if (zerop (funcall (if wait #'kcdbbegintran #'kcdbbegintrantry)
                       db (convert-to-foreign hard :boolean)))
-      (error "Can't begin a transaction. (~a)" (error-message db))
+      (error db "Can't begin a transaction.")
       t))
 
 (defun end-transaction (db &key (commit t))
   (if (zerop (kcdbendtran db (convert-to-foreign commit :boolean)))
-      (error "Can't end the current transaction. (~a)" (error-message db))
+      (error db "Can't end the current transaction.")
       t))
 
 (defun clear (db)
   (ematch (kcdbclear db)
     (1 t)
-    (0 (error "Can't clear the database. (~a)" (error-message db)))))
+    (0 (error db "Can't clear the database."))))
 
 (defun dump-snapshot (db dest)
   (with-foreign-string (dest-buf dest)
     (if (zerop (kcdbdumpsnap db dest-buf))
-        (error "Can't dump the records of the database into the file. (~a)"
-               (error-message db))
+        (error db "Can't dump the records of the database into the file.")
         t)))
 
 (defun load-snapshot (db src)
   (with-foreign-string (src-buf src)
     (if (zerop (kcdbloadsnap db src-buf))
-        (error "Can't load records from snapshot. (~a)" (error-message db))
+        (error db "Can't load records from snapshot.")
         t)))
 
 (defun count (db)
   (match (kcdbcount db)
-    (-1 (error "Can't count the records in the database. (~a)"
-               (error-message db)))
+    (-1 (error db "Can't count the records in the database."))
     (n n)))
 
 (defun size (db)
   (match (kcdbsize db)
-    (-1 (error "Can't calculate the size of the database. (~a)"
-               (error-message db)))
+    (-1 (error db "Can't calculate the size of the database."))
     (size size)))
 
 (defun status (db)
@@ -205,8 +193,7 @@ If REMOVE is true, the record is removed at the same time."
            (with-kcmalloced-pointer (ptr it)
              (mapcar (lambda (line) (apply #'cons (split "\\t" line)))
                      (split "\\n" (foreign-string-to-lisp ptr))))
-           (error "Can't retrieve the miscellaneous status information. (~a)"
-                  (error-message db))))
+           (error db "Can't retrieve the miscellaneous status information.")))
 
 (defun merge (db src mode)
   (let ((src-len (length src))
@@ -216,8 +203,7 @@ If REMOVE is true, the record is removed at the same time."
         (setf (mem-aref src-ary :pointer n) (elt src n)))
       (ematch (kcdbmerge db src-ary src-len mode)
         (1 t)
-        (0 (error "Can't merge records from the databases. (~a)"
-                  (error-message db)))))))
+        (0 (error db "Can't merge records from the databases."))))))
 
 (in-package :kc.db)
 

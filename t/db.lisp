@@ -16,6 +16,11 @@
   `(kc.db:with-db (,var ,path :reader :writer :create)
      ,@body))
 
+(5am:test error
+  (with-io (db)
+    (5am:signals kc.db:error (kc.db:error db "An error occured."))
+    (5am:signals kc.db:error (kc.db:error db "With an argument. ~a" 0))))
+
 ;;; TODO: Very poor. Need refactoring.
 (5am:test set
   (with-out (db)

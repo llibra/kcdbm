@@ -1,0 +1,12 @@
+(in-package :kc.err)
+
+(define-condition error (simple-error)
+  ((path :initarg :path :reader path)
+   (code :initarg :code :reader code)
+   (message :initarg :message :reader message))
+  (:report (lambda (condition stream)
+             (let ((control (simple-condition-format-control condition))
+                   (arguments (simple-condition-format-arguments condition))
+                   (message (message condition)))
+               (apply #'format stream control arguments)
+               (format stream " (~a)" message)))))

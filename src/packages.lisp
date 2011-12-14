@@ -120,18 +120,24 @@
   (:export :with-allocated-foreign-string :with-allocated-foreign-strings
            :with-kcmalloced-pointer :aif/ptr :it :set-method->ffi-symbol))
 
+(defpackage :kyoto-cabinet.error
+  (:nicknames :kc.err)
+  (:use :cl)
+  (:shadow :error)
+  (:export :error :path :code :message))
+
 (defpackage :kyoto-cabinet.database.base
   (:nicknames :kc.db.base)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util)
-  (:shadow :delete :open :close :set :remove :get :set :count :merge)
+  (:shadow :error :delete :open :close :set :remove :get :set :count :merge)
   (:import-from :alexandria :once-only)
   (:import-from :ppcre :split)
   (:import-from :cl-adt :match :ematch)
-  (:export :new :delete :error-message :path :open :close :error-code :accept
-           :iterate :scan-in-parallel :set :increment :increment/double :cas
-           :remove :get :get/buffer :synchronize :occupy :copy
-           :begin-transaction :end-transaction :clear :dump-snapshot
-           :load-snapshot :count :size :status :merge))
+  (:export :error :path :new :delete :open :close :error-code :accept :iterate
+           :scan-in-parallel :set :increment :increment/double :cas :remove :get
+           :get/buffer :synchronize :occupy :copy :begin-transaction
+           :end-transaction :clear :dump-snapshot :load-snapshot :count :size
+           :status :merge))
 
 (defpackage :kyoto-cabinet.database.low-level
   (:nicknames :kc.db.low)
@@ -148,8 +154,8 @@ convert various data automatically.")
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util :kc.db.base)
   (:shadow :set :increment :cas :replace :append :remove :get)
   (:import-from :alexandria :with-gensyms :once-only)
-  (:shadowing-import-from :kc.db.base :delete :open :close :count :merge)
-  (:export :new :delete :open :close :with-db :error-code :error-message :set
-           :add :replace :append :increment :cas :remove :get :seize :copy
-           :begin-transaction :end-transaction :with-transaction :clear
-           :dump-snapshot :load-snapshot :count :size :path :status :merge))
+  (:shadowing-import-from :kc.db.base :error :delete :open :close :count :merge)
+  (:export :error :path :new :delete :open :close :with-db :set :add :replace
+           :append :increment :cas :remove :get :seize :copy :begin-transaction
+           :end-transaction :with-transaction :clear :dump-snapshot
+           :load-snapshot :count :size :status :merge))

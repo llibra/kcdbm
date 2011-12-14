@@ -16,6 +16,7 @@
                                      (:file "var")
                                      (:file "conv")
                                      (:file "util")
+                                     (:file "err")
                                      (:file "db")))))
 
 (defsystem :kcdbm-test
