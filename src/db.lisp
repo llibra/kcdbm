@@ -47,9 +47,9 @@ succeed and signals an error otherwise."
 
 (defun iterate (db full-fn &key (opaque *null-pointer*) (writable t))
   (let ((writable (convert-to-foreign writable :boolean)))
-    (ematch (kcdbiterate db full-fn opaque writable)
-      (1 t)
-      (0 (error db "The iteration for the records in the database failed.")))))
+    (if (zerop (kcdbiterate db full-fn opaque writable))
+        (error db "The iteration for the records in the database failed.")
+        t)))
 
 (defun scan-in-parallel (db visitor n &key (opaque *null-pointer*))
   (if (zerop (kcdbscanpara db visitor opaque n))
@@ -106,9 +106,9 @@ If succeeds to set a value, T is returned. Otherwise, an error occurs."
       t))
 
 (defun remove (db key-buf key-len)
-  (ematch (kcdbremove db key-buf key-len)
-    (1 t)
-    (0 (error db "Can't remove the record."))))
+  (if (zerop (kcdbremove db key-buf key-len))
+      (error db "Can't remove the record.")
+      t))
 
 (defun get (db key-buf key-len &key remove)
   "Finds the record whose key equals KEY-BUF in the database associated with DB
@@ -162,9 +162,9 @@ If REMOVE is true, the record is removed at the same time."
       t))
 
 (defun clear (db)
-  (ematch (kcdbclear db)
-    (1 t)
-    (0 (error db "Can't clear the database."))))
+  (if (zerop (kcdbclear db))
+      (error db "Can't clear the database.")
+      t))
 
 (defun dump-snapshot (db dest)
   (with-foreign-string (dest-buf dest)
@@ -179,14 +179,16 @@ If REMOVE is true, the record is removed at the same time."
         t)))
 
 (defun count (db)
-  (match (kcdbcount db)
-    (-1 (error db "Can't count the records in the database."))
-    (n n)))
+  (let ((n (kcdbcount db)))
+    (if (= n -1)
+        (error db "Can't count the records in the database.")
+        n)))
 
 (defun size (db)
-  (match (kcdbsize db)
-    (-1 (error db "Can't calculate the size of the database."))
-    (size size)))
+  (let ((size (kcdbsize db)))
+    (if (= size -1)
+        (error db "Can't calculate the size of the database.")
+        size)))
 
 (defun status (db)
   (aif/ptr (kcdbstatus db)
@@ -201,9 +203,9 @@ If REMOVE is true, the record is removed at the same time."
     (with-foreign-object (src-ary :pointer src-len)
       (dotimes (n src-len)
         (setf (mem-aref src-ary :pointer n) (elt src n)))
-      (ematch (kcdbmerge db src-ary src-len mode)
-        (1 t)
-        (0 (error db "Can't merge records from the databases."))))))
+      (if (zerop (kcdbmerge db src-ary src-len mode))
+          (error db "Can't merge records from the databases.")
+          t))))
 
 (in-package :kc.db)
 

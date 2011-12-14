@@ -131,7 +131,6 @@
   (:shadow :error :delete :open :close :set :remove :get :set :count :merge)
   (:import-from :alexandria :once-only)
   (:import-from :ppcre :split)
-  (:import-from :cl-adt :match :ematch)
   (:export :error :path :new :delete :open :close :error-code :accept :iterate
            :scan-in-parallel :set :increment :increment/double :cas :remove :get
            :get/buffer :synchronize :occupy :copy :begin-transaction
