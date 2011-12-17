@@ -161,11 +161,11 @@ convert various data automatically.")
 (defpackage :kyoto-cabinet.cursor.base
   (:nicknames :kc.cur.base)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util)
-  (:shadow :delete)
-  (:export :delete))
+  (:shadow :error :delete)
+  (:export :error :delete))
 
 (defpackage :kyoto-cabinet.cursor
   (:nicknames :kc.cur)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util :kc.cur.base)
-  (:shadowing-import-from :kc.cur.base :delete)
-  (:export :delete))
+  (:shadowing-import-from :kc.cur.base :error :delete)
+  (:export :error :delete))
