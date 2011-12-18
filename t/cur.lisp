@@ -33,3 +33,7 @@
     (let ((cur (kc.db:cursor db)))
       (5am:is-true (kc.cur:jump cur))
       (kc.cur:delete cur))))
+
+(5am:test with-cursor
+  (with-io (db)
+    (5am:is (zerop (kc.cur:with-cursor (cur db) 0)))))

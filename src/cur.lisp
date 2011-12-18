@@ -19,3 +19,8 @@
   (if (zerop (kccurjump cur))
       (error cur "Can't jump to the first record.")
       t))
+
+(defmacro with-cursor ((var db) &body body)
+  `(let ((,var (kc.db:cursor ,db)))
+     (unwind-protect (progn (jump ,var) ,@body)
+       (delete ,var))))
