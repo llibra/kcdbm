@@ -5,7 +5,7 @@
 (defun db (cur) (kccurdb cur))
 
 (defun error (cur control &rest args)
-  (let* ((db (kccurdb cur))
+  (let* ((db (db cur))
          (path (kc.db:path db))
          (code (foreign-enum-keyword 'error-code (kccurecode cur)))
          (message (foreign-string-to-lisp (kccuremsg cur))))
