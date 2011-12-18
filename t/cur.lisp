@@ -27,3 +27,9 @@
       (let ((c (kc.db:cursor db)))
         (5am:is (cffi:pointerp c))
         (kc.cur:delete c)))))
+
+(5am:test jump
+  (with-io (db)
+    (let ((cur (kc.db:cursor db)))
+      (5am:is-true (kc.cur:jump cur))
+      (kc.cur:delete cur))))

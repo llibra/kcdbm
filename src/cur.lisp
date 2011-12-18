@@ -14,3 +14,8 @@
 
 (defun delete (cur)
   (kccurdel cur))
+
+(defun jump (cur)
+  (if (zerop (kccurjump cur))
+      (error cur "Can't jump to the first record.")
+      t))
