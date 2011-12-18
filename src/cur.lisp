@@ -2,6 +2,8 @@
 
 (define-condition error (kc.err:error) ())
 
+(defun db (cur) (kccurdb cur))
+
 (defun error (cur control &rest args)
   (let* ((db (kccurdb cur))
          (path (kc.db:path db))

@@ -2,12 +2,12 @@
 
 (5am:in-suite cur)
 
-(5am:test new/delete
+(5am:test db
   (with-io (db)
-    (5am:finishes
-      (let ((c (kc.db:cursor db)))
-        (5am:is (cffi:pointerp c))
-        (kc.cur:delete c)))))
+    (let ((cur (kc.db:cursor db)))
+      (5am:is (= (cffi:pointer-address db)
+                 (cffi:pointer-address (kc.cur:db cur))))
+      (kc.cur:delete cur))))
 
 (5am:test error
   (with-io (db)
@@ -20,3 +20,10 @@
           (5am:is (eq :success (kc.err:code c)))
           (5am:is (equal "no error" (kc.err:message c)))))
       (kc.cur:delete cur))))
+
+(5am:test new/delete
+  (with-io (db)
+    (5am:finishes
+      (let ((c (kc.db:cursor db)))
+        (5am:is (cffi:pointerp c))
+        (kc.cur:delete c)))))

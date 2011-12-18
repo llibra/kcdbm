@@ -162,10 +162,10 @@ convert various data automatically.")
   (:nicknames :kc.cur.base)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util)
   (:shadow :error :delete)
-  (:export :error :delete))
+  (:export :error :db :delete))
 
 (defpackage :kyoto-cabinet.cursor
   (:nicknames :kc.cur)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util :kc.cur.base)
   (:shadowing-import-from :kc.cur.base :error :delete)
-  (:export :error :delete))
+  (:export :error :db :delete))
