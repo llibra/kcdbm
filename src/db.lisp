@@ -64,7 +64,7 @@ succeed and signals an error otherwise."
     (if (constantp method env)
         `(if (zerop (,(set-method->ffi-symbol method)
                       ,db ,key-buf ,key-len ,value-buf ,value-len))
-             (error db "Can't set the value associated with the key.")
+             (error ,db "Can't set the value associated with the key.")
              t)
         form)))
 
