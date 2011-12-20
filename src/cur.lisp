@@ -24,3 +24,10 @@
   `(let ((,var (kc.db:cursor ,db)))
      (unwind-protect (progn (jump ,var) ,@body)
        (delete ,var))))
+
+(defun get-key (cur step)
+  (let ((step (convert-to-foreign step :boolean)))
+    (with-foreign-object (key-len 'size_t) 
+      (aif/ptr (kccurgetkey cur key-len step)
+               (values it (mem-aref key-len 'size_t))
+               (error cur "Can't get the key of the current record.")))))

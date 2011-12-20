@@ -37,3 +37,19 @@
 (5am:test with-cursor
   (with-io (db)
     (5am:is (zerop (kc.cur:with-cursor (cur db) 0)))))
+
+(5am:test get-key/low
+  (with-io (db)
+    (kc.db:clear db)
+    (kc.db:set db "x" "1")
+    (kc.cur:with-cursor (cur db)
+      (kc.cur:jump cur)
+      (multiple-value-bind (ptr len) (kc.cur.low:get-key cur t)
+        (kc.util:with-kcmalloced-pointer (ptr ptr)
+          (5am:is (equal "x" (cffi:foreign-string-to-lisp ptr))))
+        (5am:is (= 1 len)))
+      ;; Expectes no record.
+      (5am:signals kc.cur:error (kc.cur.low:get-key cur t))
+      (kc.cur:jump cur)
+      (5am:finishes (progn (kc.ffi:kcfree (kc.cur.low:get-key cur nil))
+                           (kc.ffi:kcfree (kc.cur.low:get-key cur t)))))))
