@@ -52,7 +52,7 @@
         (kc.util:with-kcmalloced-pointer (ptr ptr)
           (5am:is (equal "x" (cffi:foreign-string-to-lisp ptr))))
         (5am:is (= 1 len)))
-      ;; Expectes no record.
+      ;; Expect no record.
       (5am:signals kc.cur:error (kc.cur.low:get-key cur t))
       (kc.cur:jump cur)
       (5am:finishes (progn (kc.ffi:kcfree (kc.cur.low:get-key cur nil))
