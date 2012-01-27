@@ -172,5 +172,6 @@ convert various data automatically.")
 (defpackage :kyoto-cabinet.cursor
   (:nicknames :kc.cur)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util :kc.cur.base)
+  (:shadow :get-key)
   (:shadowing-import-from :kc.cur.base :error :delete)
-  (:export :error :db :delete :jump :with-cursor))
+  (:export :error :db :delete :jump :with-cursor :get-key))

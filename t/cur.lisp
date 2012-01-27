@@ -53,3 +53,15 @@
       (kc.cur:jump cur)
       (5am:finishes (progn (kc.ffi:kcfree (kc.cur.low:get-key cur nil))
                            (kc.ffi:kcfree (kc.cur.low:get-key cur t)))))))
+
+(5am:test get-key
+  (with-io (db)
+    (kc.db:clear db)
+    (kc.db:set db "x" "1")
+    (kc.cur:with-cursor (cur db)
+      (kc.cur:jump cur)
+      (5am:is (equal "x" (kc.cur:get-key cur t)))
+      (5am:signals kc.cur:error (kc.cur:get-key cur t))
+      (kc.cur:jump cur)
+      (5am:finishes (progn (kc.cur:get-key cur nil)
+                           (kc.cur:get-key cur t))))))

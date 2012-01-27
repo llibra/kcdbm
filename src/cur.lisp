@@ -31,3 +31,10 @@
       (aif/ptr (kccurgetkey cur key-len step)
                (values it (mem-aref key-len 'size_t))
                (error cur "Can't get the key of the current record.")))))
+
+(in-package :kc.cur)
+
+(defun get-key (cur step &key (as :string))
+  (multiple-value-bind (key-ptr key-len) (kc.cur.base:get-key cur step)
+    (with-kcmalloced-pointer (key-ptr key-ptr)
+      (foreign-string->x as key-ptr key-len))))
