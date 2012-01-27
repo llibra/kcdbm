@@ -30,7 +30,11 @@
 
 (5am:test jump
   (with-io (db)
+    (kc.db:clear db)
     (let ((cur (kc.db:cursor db)))
+      ;; Expect to signal kc.cur:error due to no record.
+      (5am:signals kc.cur:error (kc.cur:jump cur))
+      (kc.db:set db "x" "1")
       (5am:is-true (kc.cur:jump cur))
       (kc.cur:delete cur))))
 
