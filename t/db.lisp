@@ -2,20 +2,6 @@
 
 (5am:in-suite db)
 
-(defparameter *test-db-name* "test.kch")
-
-(defmacro with-in ((var) &body body)
-  `(kc.db:with-db (,var *test-db-name* :reader)
-     ,@body))
-
-(defmacro with-out ((var) &body body)
-  `(kc.db:with-db (,var *test-db-name* :writer :create)
-     ,@body))
-
-(defmacro with-io ((var &optional (path *test-db-name*)) &body body)
-  `(kc.db:with-db (,var ,path :reader :writer :create)
-     ,@body))
-
 (5am:test error
   (with-new-db (db)
     (5am:signals kc.db:error (kc.db:error db "An error occured."))
