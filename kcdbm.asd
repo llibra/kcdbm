@@ -25,6 +25,8 @@
   :components ((:module "t"
                         :serial t
                         :components ((:file "packages")
+                                     (:file "var")
+                                     (:file "util")
                                      (:file "suites")
                                      (:file "db")
                                      (:file "cur")))))
