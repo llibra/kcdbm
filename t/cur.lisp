@@ -74,7 +74,6 @@
   (with-new-db (db)
     (kc.db:set db "x" "1")
     (kc.cur:with-cursor (cur db)
-      (kc.cur:jump cur)
       (5am:is (equal "x" (kc.cur:get-key cur t)))
       (5am:signals kc.cur:error (kc.cur:get-key cur t))
       (kc.cur:jump cur)
