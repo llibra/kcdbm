@@ -162,16 +162,16 @@ convert various data automatically.")
   (:nicknames :kc.cur.base)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util)
   (:shadow :error :delete)
-  (:export :error :db :delete :jump :with-cursor :get-key))
+  (:export :error :db :delete :jump :with-cursor :get-key :get-value))
 
 (defpackage :kyoto-cabinet.cursor.low-level
   (:nicknames :kc.cur.low)
   (:use :kc.cur.base)
-  (:export :get-key))
+  (:export :get-key :get-value))
 
 (defpackage :kyoto-cabinet.cursor
   (:nicknames :kc.cur)
   (:use :cl :cffi :kc.ffi :kc.type :kc.var :kc.conv :kc.util :kc.cur.base)
-  (:shadow :get-key)
+  (:shadow :get-key :get-value)
   (:shadowing-import-from :kc.cur.base :error :delete)
-  (:export :error :db :delete :jump :with-cursor :get-key))
+  (:export :error :db :delete :jump :with-cursor :get-key :get-value))

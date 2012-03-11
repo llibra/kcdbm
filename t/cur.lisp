@@ -60,6 +60,11 @@
     (body "x" "1"
           #'kc.cur.low:get-key
           (lambda (v) (equal "x" v))
+          (lambda (l) (= 1 l))))
+  (5am:test (get-value/low/value :compile-at :definition-time)
+    (body "x" "1"
+          #'kc.cur.low:get-value
+          (lambda (v) (equal "1" v))
           (lambda (l) (= 1 l)))))
 
 (flet ((body (key value fn pred)
@@ -70,7 +75,11 @@
   (5am:test (get-key/value :compile-at :definition-time)
     (body "x" "1"
           (lambda (c) (kc.cur:get-key c nil))
-          (lambda (v) (equal "x" v)))))
+          (lambda (v) (equal "x" v))))
+  (5am:test (get-value/value :compile-at :definition-time)
+    (body "x" "1"
+          (lambda (c) (kc.cur:get-value c nil))
+          (lambda (v) (equal "1" v)))))
 
 (flet ((body (fn)
          (with-new-db (db)
@@ -85,5 +94,10 @@
   (5am:test (get-key/low/step :compile-at :definition-time)
     (body (lambda (cur step)
             (kc.ffi:kcfree (kc.cur.low:get-key cur step)))))
+  (5am:test (get-value/low/step :compile-at :definition-time)
+    (body (lambda (cur step)
+            (kc.ffi:kcfree (kc.cur.low:get-value cur step)))))
   (5am:test (get-key/step :compile-at :definition-time)
-    (body #'kc.cur:get-key)))
+    (body #'kc.cur:get-key))
+  (5am:test (get-value/step :compile-at :definition-time)
+    (body #'kc.cur:get-value)))
