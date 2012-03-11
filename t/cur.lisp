@@ -51,7 +51,6 @@
            (with-new-db (db)
              (kc.db:set db "x" "1")
              (kc.cur:with-cursor (cur db)
-               (kc.cur:jump cur)
                (multiple-value-bind (ptr len) (funcall fn cur t)
                  (kc.util:with-kcmalloced-pointer (ptr ptr)
                    (5am:is (equal "x" (cffi:foreign-string-to-lisp ptr))))
@@ -60,7 +59,6 @@
            (with-new-db (db)
              (kc.db:set db "x" "1")
              (kc.cur:with-cursor (cur db)
-               (kc.cur:jump cur)
                ;; Expect no record.
                (5am:signals kc.cur:error
                  (progn (kc.ffi:kcfree (funcall fn cur t))
