@@ -37,7 +37,12 @@
       (5am:is-true (kc.cur:jump cur))
       (kc.cur:delete cur))))
 
-(5am:test with-cursor
+(5am:test with-cursor/no-record
+  (with-new-db (db)
+    (5am:signals kc.cur:error
+      (kc.cur:with-cursor (cur db) :not-evaluated))))
+
+(5am:test with-cursor/return-value
   (with-new-db (db)
     (kc.db:set db "set" "but not used")
     (5am:is (zerop (kc.cur:with-cursor (cur db) 0)))))
