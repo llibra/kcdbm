@@ -3,34 +3,33 @@
 (5am:in-suite cur)
 
 (5am:test db
-  (with-io (db)
+  (with-new-db (db)
     (let ((cur (kc.db:cursor db)))
       (5am:is (= (cffi:pointer-address db)
                  (cffi:pointer-address (kc.cur:db cur))))
       (kc.cur:delete cur))))
 
 (5am:test error
-  (with-io (db)
+  (with-new-db (db)
     (let ((cur (kc.db:cursor db)))
       (5am:signals kc.cur:error (kc.cur:error cur "An error occured."))
       (5am:signals kc.cur:error (kc.cur:error cur "With an argument. ~a" 0))
       (handler-case (kc.cur:error cur "An error occured.")
         (kc.cur:error (c)
-          (5am:is (equal *test-db-name* (kc.err:path c)))
+          (5am:is (equal (namestring *default-db-pathname*) (kc.err:path c)))
           (5am:is (eq :success (kc.err:code c)))
           (5am:is (equal "no error" (kc.err:message c)))))
       (kc.cur:delete cur))))
 
 (5am:test new/delete
-  (with-io (db)
+  (with-new-db (db)
     (5am:finishes
       (let ((c (kc.db:cursor db)))
         (5am:is (cffi:pointerp c))
         (kc.cur:delete c)))))
 
 (5am:test jump
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (let ((cur (kc.db:cursor db)))
       ;; Expect to signal kc.cur:error due to no record.
       (5am:signals kc.cur:error (kc.cur:jump cur))
@@ -39,12 +38,12 @@
       (kc.cur:delete cur))))
 
 (5am:test with-cursor
-  (with-io (db)
+  (with-new-db (db)
+    (kc.db:set db "set" "but not used")
     (5am:is (zerop (kc.cur:with-cursor (cur db) 0)))))
 
 (labels ((value-and-length (fn)
-           (with-io (db)
-             (kc.db:clear db)
+           (with-new-db (db)
              (kc.db:set db "x" "1")
              (kc.cur:with-cursor (cur db)
                (kc.cur:jump cur)
@@ -53,8 +52,7 @@
                    (5am:is (equal "x" (cffi:foreign-string-to-lisp ptr))))
                  (5am:is (= 1 len))))))
          (step (fn)
-           (with-io (db)
-             (kc.db:clear db)
+           (with-new-db (db)
              (kc.db:set db "x" "1")
              (kc.cur:with-cursor (cur db)
                (kc.cur:jump cur)
@@ -73,8 +71,7 @@
     (get-x/low #'kc.cur.low:get-key)))
 
 (5am:test get-key
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (kc.db:set db "x" "1")
     (kc.cur:with-cursor (cur db)
       (kc.cur:jump cur)
