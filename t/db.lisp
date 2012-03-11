@@ -17,23 +17,23 @@
      ,@body))
 
 (5am:test error
-  (with-io (db)
+  (with-new-db (db)
     (5am:signals kc.db:error (kc.db:error db "An error occured."))
     (5am:signals kc.db:error (kc.db:error db "With an argument. ~a" 0))))
 
 ;;; TODO: Very poor. Need refactoring.
 (5am:test set
-  (with-out (db)
+  (with-new-db (db)
     (5am:finishes (kc.db:set db "John" "McCarthy"))
     (5am:finishes (kc.db:set db "ジョン" "マッカーシー"))))
 
 (5am:test get
-  (with-io (db)
+  (with-new-db (db)
     (kc.db:set db "x" "1")
     (5am:is (equal "1" (kc.db:get db "x")))))
 
 (5am:test seize
-  (with-io (db)
+  (with-new-db (db)
     (flet ((test (fn)
              (kc.db:set db "x" "1")
              (5am:finishes (funcall fn))
@@ -48,8 +48,7 @@
   kc.ffi:+kcvisremove+)
 
 (5am:test iterate
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (kc.db:set db "x" "1")
     (kc.db:set db "y" "2")
     (kc.db:set db "z" "3")
@@ -57,7 +56,7 @@
     (5am:is (zerop (kc.db:count db)))))
 
 (5am:test append
-  (with-io (db)
+  (with-new-db (db)
     (kc.db:set db "x" "+")
     (kc.db:set db "x" "+" :method :append)
     (5am:is (equal "++" (kc.db:get db "x")))
@@ -65,8 +64,7 @@
     (5am:is (equal "+++" (kc.db:get db "x")))))
 
 (5am:test increment
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (5am:is (= 1 (kc.db:increment db "i" 1)))
     (5am:is (= 2 (kc.db:increment db "i" 1)))
     (5am:is (= 4 (kc.db:increment db "i" 2)))
@@ -75,15 +73,13 @@
     (5am:is (= 2.5d0 (kc.db:increment db "f" 1.5d0)))))
 
 (5am:test cas
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (kc.db:set db "x" "old")
     (kc.db:cas db "x" "old" "new")
     (5am:is (equal "new" (kc.db:get db "x")))))
 
 (5am:test remove
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (kc.db:set db "x" "1")
     (kc.db:set db "y" "2")
     (kc.db:remove db "x")
@@ -93,8 +89,7 @@
     (5am:signals error (kc.db:get db "y"))))
 
 (5am:test clear
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (kc.db:set db "x" "1")
     (kc.db:set db "y" "2")
     (kc.db:clear db)
@@ -104,8 +99,7 @@
 
 (5am:test snapshot
   (let ((dest "test.kcss"))
-    (with-io (db)
-      (kc.db:clear db)
+    (with-new-db (db)
       (kc.db:set db "x" "1")
       (kc.db:set db "y" "2")
       (kc.db:dump-snapshot db dest)
@@ -117,8 +111,7 @@
         (5am:is (= count (kc.db:count db)))))))
 
 (5am:test count
-  (with-io (db)
-    (kc.db:clear db)
+  (with-new-db (db)
     (5am:is (zerop (kc.db:count db)))
     (kc.db:set db "x" "1")
     (5am:is (= (kc.db:count db) 1))
@@ -126,31 +119,27 @@
     (5am:is (= (kc.db:count db) 2))))
 
 (5am:test size
-  (5am:is (= (with-io (db)
+  (5am:is (= (with-new-db (db)
                (kc.db:size db))
-             (with-open-file (s *test-db-name*)
+             (with-open-file (s *default-db-pathname*)
                (file-length s)))))
 
 (5am:test merge
-  (with-io (src1 "src1.kch")
-    (kc.db:clear src1)
+  (with-new-db (src1 "src1.kch")
     (kc.db:set src1 "x" "1")
-    (with-io (src2 "src2.kch")
-      (kc.db:clear src2)
+    (with-new-db (src2 "src2.kch")
       (kc.db:set src2 "y" "2")
-      (with-io (dest "dest.kch")
-        (kc.db:clear dest)
+      (with-new-db (dest "dest.kch")
         (kc.db:merge dest (list src1 src2) :set)
         (5am:is (equal "1" (kc.db:get dest "x")))
         (5am:is (equal "2" (kc.db:get dest "y")))))))
 
 (5am:test copy
-  (with-io (src "src.kch")
-    (kc.db:clear src)
+  (with-new-db (src "src.kch")
     (kc.db:set src "x" "1")
     (kc.db:set src "y" "2")
     (kc.db:copy src "dest.kch")
-    (with-io (dest "dest.kch")
+    (with-db (dest "dest.kch")
       (5am:is (equal "1" (kc.db:get dest "x")))
       (5am:is (equal "2" (kc.db:get dest "y")))
       (5am:signals error (kc.db:get dest "z"))
