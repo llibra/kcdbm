@@ -117,7 +117,8 @@
   (:nicknames :kc.util)
   (:use :cl :cffi :kc.ffi)
   (:export :with-allocated-foreign-string :with-allocated-foreign-strings
-           :with-kcmalloced-pointer :aif/ptr :it :set-method->ffi-symbol))
+           :with-kcmalloced-pointer :with-kcmalloced-pointers :aif/ptr :it
+           :set-method->ffi-symbol))
 
 (defpackage :kyoto-cabinet.error
   (:nicknames :kc.err)

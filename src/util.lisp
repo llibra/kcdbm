@@ -16,6 +16,13 @@
      (unwind-protect (progn ,@body)
        (kcfree ,var))))
 
+(defmacro with-kcmalloced-pointers (bindings &body body)
+  (destructuring-bind (binding . rest) bindings
+    (if rest
+        `(with-kcmalloced-pointer ,binding
+           (with-kcmalloced-pointers ,rest ,@body))
+        `(with-kcmalloced-pointer ,binding ,@body))))
+
 (defmacro aif/ptr (test then &optional else)
   `(let ((it ,test))
      (if (null-pointer-p it) ,else ,then)))
