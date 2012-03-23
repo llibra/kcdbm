@@ -39,6 +39,18 @@
     (body #'kccurgetvalue "Can't get the value of the current record."
           cur step)))
 
+(defun get (cur step)
+  (let ((step (convert-to-foreign step :boolean)))
+    (with-foreign-objects ((key-len 'size_t)
+                           (value-buf :pointer)
+                           (value-len 'size_t))
+      (aif/ptr (kccurget cur key-len value-buf value-len step)
+               (values it
+                       (mem-aref key-len 'size_t)
+                       (mem-aref value-buf :pointer)
+                       (mem-aref value-len 'size_t))
+               (error cur "Can't get the data of the current record.")))))
+
 (in-package :kc.cur)
 
 (flet ((body (fn cur step as)
@@ -50,3 +62,12 @@
     (body #'kc.cur.base:get-key cur step as))
   (defun get-value (cur step &key (as :string))
     (body #'kc.cur.base:get-value cur step as)))
+
+(defun get (cur step &key (as :string))
+  (let ((as (if (consp as) as (cons as as))))
+    (multiple-value-bind (key-buf key-len value-buf value-len)
+        (kc.cur.base:get cur step)
+      (with-kcmalloced-pointer (key-buf key-buf)
+        (with-kcmalloced-pointer (value-buf value-buf)
+          (values (foreign-string->x (car as) key-buf key-len)
+                  (foreign-string->x (cdr as) value-buf value-len)))))))
