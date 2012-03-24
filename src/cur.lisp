@@ -15,6 +15,15 @@
 (defun delete (cur)
   (kccurdel cur))
 
+(defun accept (cur fn &key (opaque *null-pointer*)
+                           (writable t)
+                           step)
+  (let ((writable (convert-to-foreign writable :boolean))
+        (step (convert-to-foreign step :boolean)))
+    (if (zerop (kccuraccept cur fn opaque writable step))
+        (error cur "Can't accept the visitor function.")
+        t)))
+
 (defun jump (cur)
   (if (zerop (kccurjump cur))
       (error cur "Can't jump to the first record.")

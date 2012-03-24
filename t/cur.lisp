@@ -28,6 +28,13 @@
         (5am:is (cffi:pointerp c))
         (kc.cur:delete c)))))
 
+(5am:test accept/write
+  (with-new-db (db)
+    (kc.db:set db "x" "1")
+    (kc.cur:with-cursor (cur db)
+      (kc.cur.low:accept cur (cffi:callback rm))
+      (5am:is (zerop (kc.db:count db))))))
+
 (5am:test jump
   (with-new-db (db)
     (let ((cur (kc.db:cursor db)))
@@ -104,6 +111,12 @@
         (5am:is (equal "x" key))
         (5am:is (equal "1" value))))))
 
+(cffi:defcallback nop :pointer
+    ((kbuf :pointer) (ksiz kc.ffi:size_t) (vbuf :pointer) (vsiz kc.ffi:size_t)
+     (sp :pointer) (opq :pointer))
+  (declare (ignore kbuf ksiz vbuf vsiz sp opq))
+  kc.ffi:+kcvisnop+)
+
 (flet ((body (fn)
          (with-new-db (db)
            (kc.db:set db "x" "1")
@@ -114,6 +127,10 @@
              (kc.cur:jump cur)
              (5am:finishes
                (progn (funcall fn cur nil) (funcall fn cur t)))))))
+  (5am:test (accept/step :compile-at :definition-time)
+    (body (lambda (cur step)
+            (kc.cur.low:accept cur (cffi:callback nop)
+                               :writable nil :step step))))
   (5am:test (get-key/low/step :compile-at :definition-time)
     (body (lambda (cur step)
             (kc.ffi:kcfree (kc.cur.low:get-key cur step)))))
