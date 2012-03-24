@@ -28,6 +28,11 @@
         (error cur "Can't set the value of the current record.")
         t)))
 
+(defun remove (cur)
+  (if (zerop (kccurremove cur))
+      (error cur "Can't remove the current record.")
+      t))
+
 (defun jump (cur)
   (if (zerop (kccurjump cur))
       (error cur "Can't jump to the first record.")

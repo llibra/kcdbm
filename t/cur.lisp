@@ -50,6 +50,14 @@
     (5am:test (set-value/set :compile-at :definition-time)
       (body #'kc.cur:set-value key old new))))
 
+(5am:test remove
+  (with-new-db (db)
+    (kc.db:set db "x" "1")
+    (kc.cur:with-cursor (cur db)
+      (kc.cur:remove cur))
+    (5am:signals kc.db:error (kc.db:get db "x"))
+    (5am:is (zerop (kc.db:count db)))))
+
 (5am:test jump
   (with-new-db (db)
     (let ((cur (kc.db:cursor db)))
