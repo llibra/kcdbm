@@ -22,6 +22,12 @@
         (error cur "Can't accept the visitor function.")
         t)))
 
+(defun set-value (cur buf len &key step)
+  (let ((step (convert-to-foreign step :boolean)))
+    (if (zerop (kccursetvalue cur buf len step))
+        (error cur "Can't set the value of the current record.")
+        t)))
+
 (defun jump (cur)
   (if (zerop (kccurjump cur))
       (error cur "Can't jump to the first record.")
@@ -59,6 +65,10 @@
                (error cur "Can't get the data of the current record.")))))
 
 (in-package :kc.cur)
+
+(defun set-value (cur value &rest args)
+  (with-allocated-foreign-string (buf len (x->foreign-string value))
+    (apply #'kc.cur.base:set-value cur buf len args)))
 
 (flet ((body (fn cur step as)
          (multiple-value-bind (value-ptr value-len) (funcall fn cur :step step)
