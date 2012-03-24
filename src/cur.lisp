@@ -15,9 +15,7 @@
 (defun delete (cur)
   (kccurdel cur))
 
-(defun accept (cur fn &key (opaque *null-pointer*)
-                           (writable t)
-                           step)
+(defun accept (cur fn &key (opaque *null-pointer*) (writable t) step)
   (let ((writable (convert-to-foreign writable :boolean))
         (step (convert-to-foreign step :boolean)))
     (if (zerop (kccuraccept cur fn opaque writable step))
